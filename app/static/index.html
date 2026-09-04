@@ -1,0 +1,3186 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-slate-50">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATS - Recruitment Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .animate-fade-in {
+      animation: fadeIn .2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .kanban-col {
+      min-width: 260px;
+      max-width: 260px;
+    }
+
+    .kanban-card {
+      cursor: grab;
+    }
+
+    .kanban-card.dragging {
+      opacity: .4;
+    }
+
+    .kanban-col.drag-over {
+      background-color: #e0e7ff;
+    }
+
+    [x-cloak] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-slate-50 text-slate-800 antialiased">
+
+  <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+  </div>
+
+  <!-- ============ AUTH SCREEN ============ -->
+  <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-11 h-11 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl">
+          <i class="fa-solid fa-users-gear"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight">ATS</h1>
+          <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wide">Recruitment Management</span>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
+        <button id="auth-tab-login" onclick="setAuthMode('login')"
+          class="flex-1 py-2 rounded-lg text-sm font-bold transition">Đăng nhập</button>
+        <button id="auth-tab-register" onclick="setAuthMode('register')"
+          class="flex-1 py-2 rounded-lg text-sm font-bold transition">Đăng ký (Ứng viên)</button>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
+          <input type="email" id="login-email" required
+            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mật khẩu</label>
+          <div class="relative">
+            <input type="password" id="login-password" required
+              class="w-full px-3.5 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <button type="button" onclick="togglePasswordVisibility('login-password', this)"
+              class="absolute inset-y-0 right-0 px-3 text-slate-400 hover:text-slate-600" tabindex="-1"><i
+                class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        <div class="text-right -mt-2">
+          <a href="#" onclick="openForgotPasswordModal();return false;"
+            class="text-xs font-semibold text-indigo-600 hover:underline">Quên mật khẩu?</a>
+        </div>
+        <button type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm">Đăng
+          nhập</button>
+      </form>
+
+      <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ và tên</label>
+          <input type="text" id="reg-fullname" required
+            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
+          <input type="email" id="reg-email" required
+            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại</label>
+          <input type="text" id="reg-phone"
+            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mật khẩu (tối thiểu 8 ký tự, có chữ và
+            số)</label>
+          <div class="relative">
+            <input type="password" id="reg-password" required minlength="8"
+              class="w-full px-3.5 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <button type="button" onclick="togglePasswordVisibility('reg-password', this)"
+              class="absolute inset-y-0 right-0 px-3 text-slate-400 hover:text-slate-600" tabindex="-1"><i
+                class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm">Tạo
+          tài khoản Ứng viên</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ APP SHELL ============ -->
+  <div id="app-shell" class="hidden h-screen w-full flex overflow-hidden">
+    <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0">
+      <div>
+        <div class="p-5 flex items-center gap-3 border-b border-slate-800">
+          <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center"><i
+              class="fa-solid fa-users-gear"></i></div>
+          <div>
+            <h1 class="font-bold text-base leading-tight">ATS</h1>
+            <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Recruitment Management</span>
+          </div>
+        </div>
+        <nav id="sidebar-nav" class="p-3 space-y-1"></nav>
+      </div>
+      <div class="p-4 border-t border-slate-800 bg-slate-950/60">
+        <div class="flex items-center gap-3 mb-3">
+          <div
+            class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs"
+            id="user-avatar">??</div>
+          <div class="overflow-hidden">
+            <h4 id="user-name" class="font-semibold text-xs text-slate-200 truncate">-</h4>
+            <p id="user-role" class="text-[10px] text-slate-400 truncate">-</p>
+          </div>
+        </div>
+        <button onclick="logout()"
+          class="w-full text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg py-2 transition">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i> Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <header class="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 shrink-0">
+        <h2 id="page-title" class="text-lg font-bold text-slate-800">-</h2>
+        <div id="header-actions" class="flex items-center gap-2"></div>
+      </header>
+      <div class="flex-1 overflow-y-auto p-6" id="tab-content"></div>
+    </main>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+  <div id="modal-root"></div>
+
+  <script>
+    /* ==================================================================
+       STATE & API HELPER
+       ================================================================== */
+    const state = {
+      accessToken: sessionStorage.getItem('ats_access_token') || null,
+      refreshToken: sessionStorage.getItem('ats_refresh_token') || null,
+      currentUser: null,
+      activeTab: null,
+      cache: { departments: [], jobs: [], applications: [] },
+    };
+
+    const STATUS_LABEL = {
+      NEW: 'Mới nộp', SCREENING: 'Đang sàng lọc',
+      SHORTLISTED: 'Đã shortlist', INTERVIEW: 'Phỏng vấn', OFFER: 'Đã gửi Offer',
+      HIRED: 'Đã tuyển', REJECTED: 'Từ chối', WITHDRAWN: 'Đã rút hồ sơ', ARCHIVED: 'Lưu trữ',
+    };
+    const OFFER_STATUS_LABEL = {
+      DRAFT: 'Nháp', PENDING_APPROVAL: 'Chờ duyệt', APPROVED: 'Đã duyệt', SENT: 'Đã gửi ứng viên',
+      ACCEPTED: 'Ứng viên đã nhận', DECLINED: 'Ứng viên từ chối', EXPIRED: 'Hết hạn',
+    };
+    // Thu tu pipeline - dung de biet 1 lan doi trang thai la forward hay backward (khop app/services/application_service.py)
+    const PIPELINE_ORDER = ['NEW', 'SCREENING', 'SHORTLISTED', 'INTERVIEW', 'OFFER', 'HIRED'];
+    const KANBAN_COLUMNS = ['NEW', 'SCREENING', 'SHORTLISTED', 'INTERVIEW', 'OFFER', 'HIRED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED'];
+
+    async function api(path, { method = 'GET', body, headers = {}, retry = true } = {}) {
+      const finalHeaders = { ...headers };
+      if (body !== undefined) finalHeaders['Content-Type'] = 'application/json';
+      if (state.accessToken) finalHeaders['Authorization'] = `Bearer ${state.accessToken}`;
+
+      const res = await fetch(path, {
+        method,
+        headers: finalHeaders,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+
+      if (res.status === 401 && retry && state.refreshToken) {
+        const ok = await tryRefreshToken();
+        if (ok) return api(path, { method, body, headers, retry: false });
+      }
+
+      if (!res.ok) {
+        let detail = res.statusText;
+        try { const j = await res.json(); if (j.detail) detail = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail); } catch (e) { }
+        const err = new Error(detail);
+        err.status = res.status;
+        throw err;
+      }
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    async function apiUploadFile(path, file, retry = true) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const headers = {};
+      if (state.accessToken) headers['Authorization'] = `Bearer ${state.accessToken}`;
+      // KHONG set Content-Type thu cong - trinh duyet tu them boundary cho multipart/form-data.
+      const res = await fetch(path, { method: 'POST', headers, body: formData });
+
+      if (res.status === 401 && retry && state.refreshToken) {
+        const ok = await tryRefreshToken();
+        if (ok) return apiUploadFile(path, file, false);
+      }
+      if (!res.ok) {
+        let detail = res.statusText;
+        try { const j = await res.json(); if (j.detail) detail = j.detail; } catch (e) { }
+        const err = new Error(detail);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    }
+
+    // tai file that ve may qua GET /resumes/{id}/download -
+    // endpoint yeu cau Bearer token (khong the dung the <a href> tho vi trinh
+    // duyet khong dinh kem Authorization header cho request dieu huong thuong).
+    async function apiDownloadFile(path, suggestedFileName) {
+      const headers = {};
+      if (state.accessToken) headers['Authorization'] = `Bearer ${state.accessToken}`;
+      const res = await fetch(path, { headers });
+      if (!res.ok) {
+        let detail = res.statusText;
+        try { const j = await res.json(); if (j.detail) detail = j.detail; } catch (e) { }
+        const err = new Error(detail);
+        err.status = res.status;
+        throw err;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = suggestedFileName || 'download';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function tryRefreshToken() {
+      try {
+        const res = await fetch('/auth/refresh', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: state.refreshToken }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        state.accessToken = data.access_token;
+        sessionStorage.setItem('ats_access_token', state.accessToken);
+        return true;
+      } catch (e) { return false; }
+    }
+
+    /* ==================================================================
+       TOAST / CONFIRM
+       ================================================================== */
+    function showToast(message, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const styles = { success: 'bg-emerald-600', error: 'bg-rose-600', info: 'bg-slate-800' };
+      el.className = `${styles[type] || styles.info} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-semibold animate-fade-in pointer-events-auto`;
+      el.textContent = message;
+      c.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3500);
+    }
+
+    function apiErrorToast(err, prefix = '') {
+      console.error(err);
+      showToast(`${prefix}${err.message || 'Đã có lỗi xảy ra'}`, 'error');
+    }
+
+    function closeModal() {
+      // v2.3 Section 5.2: form "Sua ung vien" phai canh bao khi rot khoi ma chua
+      // luu (ke ca bam ra ngoai modal/backdrop, khong chi nut Huy) - dat guard o
+      // day (dung chung 1 diem thoat cua moi modal) thay vi rieng tung noi goi.
+      if (typeof candidateEditDirty !== 'undefined' && candidateEditDirty) {
+        if (!confirm('Bạn có thay đổi chưa được lưu. Bạn có chắc muốn rời khỏi?')) return;
+        candidateEditDirty = false;
+      }
+      document.getElementById('modal-root').innerHTML = '';
+    }
+
+    function renderModal(innerHtml, widthClass = 'max-w-lg') {
+      document.getElementById('modal-root').innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeModal()">
+      <div class="bg-white rounded-2xl shadow-2xl ${widthClass} w-full max-h-[90vh] overflow-y-auto">${innerHtml}</div>
+    </div>`;
+    }
+
+    /* ==================================================================
+       AUTH
+       ================================================================== */
+    function setAuthMode(mode) {
+      const loginTab = document.getElementById('auth-tab-login');
+      const regTab = document.getElementById('auth-tab-register');
+      const loginForm = document.getElementById('login-form');
+      const regForm = document.getElementById('register-form');
+      const active = 'bg-white text-indigo-600 shadow-sm';
+      const inactive = 'text-slate-500';
+      if (mode === 'login') {
+        loginTab.className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${active}`;
+        regTab.className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${inactive}`;
+        loginForm.classList.remove('hidden'); regForm.classList.add('hidden');
+      } else {
+        regTab.className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${active}`;
+        loginTab.className = `flex-1 py-2 rounded-lg text-sm font-bold transition ${inactive}`;
+        regForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+      }
+    }
+
+    function setTokens(data) {
+      state.accessToken = data.access_token;
+      sessionStorage.setItem('ats_access_token', state.accessToken);
+      if (data.refresh_token) {
+        state.refreshToken = data.refresh_token;
+        sessionStorage.setItem('ats_refresh_token', state.refreshToken);
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      try {
+        const data = await api('/auth/login', { method: 'POST', body: { email, password } });
+        setTokens(data);
+        await bootstrap();
+      } catch (err) { showToast(translateAuthError(err), 'error'); }
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      const payload = {
+        full_name: document.getElementById('reg-fullname').value,
+        email: document.getElementById('reg-email').value,
+        phone: document.getElementById('reg-phone').value || null,
+        password: document.getElementById('reg-password').value,
+      };
+      try {
+        const data = await api('/auth/register', { method: 'POST', body: payload });
+        setTokens(data);
+        await bootstrap();
+      } catch (err) { showToast(translateAuthError(err), 'error'); }
+    }
+
+    /* ==================================================================
+       PASSWORD SHOW/HIDE + FORGOT/RESET PASSWORD (v2.2 Section 18-25)
+       ================================================================== */
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      btn.innerHTML = isHidden ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+    }
+
+    // Section 20: thong bao loi Candidate Account phai tieng Viet, khong lo
+    // SQL/JWT/bcrypt/500 raw. Khong doan chinh xac tung truong hop - chi map cac
+    // ma loi da biet tu backend, con lai fallback ve 1 cau chung chung an toan.
+    const AUTH_ERROR_VI = {
+      EMAIL_ALREADY_REGISTERED: 'Email này đã được sử dụng. Vui lòng sử dụng email khác hoặc chọn "Quên mật khẩu".',
+      INVALID_CREDENTIALS: 'Tài khoản hoặc mật khẩu không hợp lệ.',
+      ACCOUNT_NOT_ACTIVE: 'Tài khoản của bạn hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
+      PASSWORD_MUST_CONTAIN_LETTER_AND_DIGIT: 'Mật khẩu phải bao gồm ít nhất chữ và số.',
+      INVALID_OR_EXPIRED_RESET_TOKEN: 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu lại.',
+      INVALID_REFRESH_TOKEN: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+      REFRESH_TOKEN_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+    };
+
+    function translateAuthError(err) {
+      let raw = err.message || '';
+      const m = raw.match(/Value error,\s*(.+)/);
+      if (m) raw = m[1].trim();
+      for (const code of Object.keys(AUTH_ERROR_VI)) {
+        if (raw.includes(code)) return AUTH_ERROR_VI[code];
+      }
+      if (raw.toLowerCase().includes('email')) return 'Email không hợp lệ.';
+      if (err.status === 422) return 'Thông tin nhập chưa hợp lệ. Vui lòng kiểm tra lại.';
+      return 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
+    }
+
+    function openForgotPasswordModal() {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Quên mật khẩu</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleForgotPassword(event)" class="p-6 space-y-4">
+      <p class="text-xs text-slate-500">Nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu nếu tài khoản tồn tại.</p>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
+        <input type="email" id="forgot-email" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Gửi yêu cầu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleForgotPassword(event) {
+      event.preventDefault();
+      const email = val('forgot-email');
+      try {
+        const data = await api('/auth/forgot-password', { method: 'POST', body: { email } });
+        closeModal();
+        // Section 24: phan hoi trung tinh - khong tiet lo email co ton tai hay khong.
+        showToast(data.message, 'success');
+      } catch (err) { showToast(translateAuthError(err), 'error'); }
+    }
+
+    function openResetPasswordModal(prefilledToken = '') {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Đặt lại mật khẩu</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleResetPassword(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mã đặt lại mật khẩu (từ email)</label>
+        <input id="reset-token" required value="${escapeHtml(prefilledToken)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mật khẩu mới (tối thiểu 8 ký tự, có chữ và số)</label>
+        <div class="relative">
+          <input type="password" id="reset-new-password" required minlength="8" class="w-full px-3.5 py-2 pr-10 border border-slate-200 rounded-xl text-sm">
+          <button type="button" onclick="togglePasswordVisibility('reset-new-password', this)" class="absolute inset-y-0 right-0 px-3 text-slate-400" tabindex="-1"><i class="fa-solid fa-eye"></i></button>
+        </div></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Xác nhận mật khẩu mới</label>
+        <div class="relative">
+          <input type="password" id="reset-confirm-password" required minlength="8" class="w-full px-3.5 py-2 pr-10 border border-slate-200 rounded-xl text-sm">
+          <button type="button" onclick="togglePasswordVisibility('reset-confirm-password', this)" class="absolute inset-y-0 right-0 px-3 text-slate-400" tabindex="-1"><i class="fa-solid fa-eye"></i></button>
+        </div></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Đặt lại mật khẩu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleResetPassword(event) {
+      event.preventDefault();
+      const newPassword = val('reset-new-password');
+      const confirmPassword = val('reset-confirm-password');
+      if (newPassword !== confirmPassword) {
+        showToast('Mật khẩu xác nhận không khớp.', 'error');
+        return;
+      }
+      try {
+        const data = await api('/auth/reset-password', { method: 'POST', body: { token: val('reset-token'), new_password: newPassword } });
+        closeModal();
+        showToast(data.message, 'success');
+        setAuthMode('login');
+      } catch (err) { showToast(translateAuthError(err), 'error'); }
+    }
+
+    function logout() {
+      state.accessToken = null; state.refreshToken = null; state.currentUser = null;
+      sessionStorage.removeItem('ats_access_token'); sessionStorage.removeItem('ats_refresh_token');
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+      setAuthMode('login');
+    }
+
+    async function bootstrap() {
+      if (!state.accessToken) { document.getElementById('auth-screen').classList.remove('hidden'); document.getElementById('app-shell').classList.add('hidden'); return; }
+      try {
+        state.currentUser = await api('/auth/me');
+      } catch (err) {
+        logout(); return;
+      }
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+      renderShell();
+    }
+
+    /* ==================================================================
+       SHELL / NAV
+       ================================================================== */
+    const TABS_BY_ROLE = {
+      CANDIDATE: [
+        { id: 'jobs', label: 'Việc làm', icon: 'fa-briefcase' },
+        { id: 'my-applications', label: 'Hồ sơ của tôi', icon: 'fa-file-lines' },
+        { id: 'my-interviews', label: 'Lịch phỏng vấn', icon: 'fa-calendar-days' },
+      ],
+      HR: [
+        { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
+        { id: 'pipeline', label: 'Ứng viên', icon: 'fa-table-columns' },
+        { id: 'jobs', label: 'Tin tuyển dụng', icon: 'fa-briefcase' },
+        { id: 'interviews', label: 'Lịch phỏng vấn', icon: 'fa-calendar-days' },
+        { id: 'email-templates', label: 'Mẫu Email', icon: 'fa-envelope-open-text' },
+      ],
+      HR_MANAGER: [
+        { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
+        { id: 'pipeline', label: 'Ứng viên', icon: 'fa-table-columns' },
+        { id: 'jobs', label: 'Tin tuyển dụng', icon: 'fa-briefcase' },
+        { id: 'interviews', label: 'Lịch phỏng vấn', icon: 'fa-calendar-days' },
+        { id: 'offers', label: 'Offer chờ duyệt', icon: 'fa-file-signature' },
+        { id: 'email-templates', label: 'Mẫu Email', icon: 'fa-envelope-open-text' },
+        { id: 'recruiters', label: 'Đội ngũ HR', icon: 'fa-id-card' },
+        { id: 'departments', label: 'Phòng ban', icon: 'fa-sitemap' },
+        { id: 'candidate-sources', label: 'Nguồn ứng viên', icon: 'fa-diagram-project' },
+      ],
+      ADMIN: [
+        { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
+        { id: 'pipeline', label: 'Ứng viên', icon: 'fa-table-columns' },
+        { id: 'jobs', label: 'Tin tuyển dụng', icon: 'fa-briefcase' },
+        { id: 'interviews', label: 'Lịch phỏng vấn', icon: 'fa-calendar-days' },
+        { id: 'offers', label: 'Offer chờ duyệt', icon: 'fa-file-signature' },
+        { id: 'email-templates', label: 'Mẫu Email', icon: 'fa-envelope-open-text' },
+        { id: 'recruiters', label: 'Đội ngũ HR', icon: 'fa-id-card' },
+        { id: 'departments', label: 'Phòng ban', icon: 'fa-sitemap' },
+        { id: 'candidate-sources', label: 'Nguồn ứng viên', icon: 'fa-diagram-project' },
+        { id: 'audit', label: 'Audit Log', icon: 'fa-shield-halved' },
+      ],
+    };
+
+    function renderShell() {
+      const u = state.currentUser;
+      document.getElementById('user-avatar').textContent = (u.full_name || '?').slice(0, 2).toUpperCase();
+      document.getElementById('user-name').textContent = u.full_name;
+      document.getElementById('user-role').textContent = u.role;
+
+      const tabs = TABS_BY_ROLE[u.role] || [];
+      document.getElementById('sidebar-nav').innerHTML = tabs.map(t => `
+    <a href="#" onclick="switchTab('${t.id}');return false;" id="menu-${t.id}"
+       class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800/60 font-medium text-sm transition">
+      <i class="fa-solid ${t.icon} w-5"></i><span>${t.label}</span>
+    </a>`).join('');
+
+      switchTab(tabs[0]?.id || 'jobs');
+    }
+
+    async function switchTab(tabId) {
+      state.activeTab = tabId;
+      document.querySelectorAll('#sidebar-nav a').forEach(a => a.classList.remove('bg-slate-800', 'text-white'));
+      const menuEl = document.getElementById(`menu-${tabId}`);
+      if (menuEl) menuEl.classList.add('bg-slate-800', 'text-white');
+
+      const titles = {
+        dashboard: 'Dashboard', jobs: 'Tin tuyển dụng', 'my-applications': 'Hồ sơ ứng tuyển của tôi', pipeline: 'Pipeline ứng viên',
+        offers: 'Offer chờ duyệt', 'email-templates': 'Mẫu Email', recruiters: 'Đội ngũ HR', departments: 'Phòng ban', audit: 'Audit Log',
+        interviews: 'Lịch phỏng vấn', 'my-interviews': 'Lịch phỏng vấn của tôi', 'candidate-sources': 'Nguồn ứng viên',
+      };
+      document.getElementById('page-title').textContent = titles[tabId] || '';
+      document.getElementById('header-actions').innerHTML = headerActionsFor(tabId);
+      document.getElementById('tab-content').innerHTML = `<div class="text-center py-20 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>`;
+
+      try {
+        if (tabId === 'dashboard') await renderDashboardTab();
+        else if (tabId === 'jobs') await renderJobsTab();
+        else if (tabId === 'my-applications') await renderMyApplicationsTab();
+        else if (tabId === 'pipeline') await renderPipelineTab();
+        else if (tabId === 'offers') await renderOffersTab();
+        else if (tabId === 'email-templates') await renderEmailTemplatesTab();
+        else if (tabId === 'recruiters') await renderRecruitersTab();
+        else if (tabId === 'departments') await renderDepartmentsTab();
+        else if (tabId === 'audit') await renderAuditTab();
+        else if (tabId === 'interviews') await renderInterviewsTab();
+        else if (tabId === 'my-interviews') await renderMyInterviewsTab();
+        else if (tabId === 'candidate-sources') await renderCandidateSourcesTab();
+      } catch (err) { apiErrorToast(err); document.getElementById('tab-content').innerHTML = `<p class="text-rose-500 text-sm">Không tải được dữ liệu.</p>`; }
+    }
+
+    function headerActionsFor(tabId) {
+      const role = state.currentUser.role;
+      if (tabId === 'jobs' && (role === 'HR_MANAGER' || role === 'ADMIN')) {
+        return `<button onclick="openCreateJobModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Tạo tin tuyển dụng</button>`;
+      }
+      if (tabId === 'departments' && (role === 'HR_MANAGER' || role === 'ADMIN')) {
+        return `<button onclick="openCreateDepartmentModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Thêm phòng ban</button>`;
+      }
+      if (tabId === 'recruiters' && (role === 'HR_MANAGER' || role === 'ADMIN')) {
+        return `<button onclick="openCreateHrModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-user-plus mr-1"></i> Thêm HR</button>`;
+      }
+      if (tabId === 'email-templates' && (role === 'HR_MANAGER' || role === 'ADMIN')) {
+        return `<button onclick="openCreateEmailTemplateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Thêm mẫu Email</button>`;
+      }
+      if (tabId === 'pipeline') {
+        return `
+      <button onclick="openCreateCandidateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-user-plus mr-1"></i> Thêm ứng viên</button>
+      <button onclick="exportApplicationsToCSV()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-file-csv mr-1 text-emerald-600"></i> Xuất CSV</button>`;
+      }
+      if (tabId === 'candidate-sources' && (role === 'HR_MANAGER' || role === 'ADMIN')) {
+        return `<button onclick="openCreateCandidateSourceModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Thêm nguồn</button>`;
+      }
+      if (tabId === 'interviews') {
+        return `<button onclick="openCreateInterviewModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> Thêm lịch phỏng vấn</button>`;
+      }
+      return '';
+    }
+
+    /* ==================================================================
+       DASHBOARD TAB
+       ================================================================== */
+    let chartInstances = {};
+
+    function _renderChart(canvasId, config) {
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+      chartInstances[canvasId] = new Chart(ctx, config);
+    }
+
+    async function renderDashboardTab() {
+      const s = await api('/dashboard/summary');
+
+      document.getElementById('tab-content').innerHTML = `
+    <div class="space-y-6 animate-fade-in">
+      <div class="flex justify-end">
+        <button onclick="exportDashboardReport()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-file-arrow-down mr-1"></i>Xuất báo cáo</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        ${dashboardKpiCard('Tổng tin tuyển dụng', s.total_jobs, `${s.published_jobs} đang đăng`, 'fa-briefcase', 'indigo')}
+        ${dashboardKpiCard('Tổng ứng viên', s.total_applications, '', 'fa-users', 'sky')}
+        ${dashboardKpiCard('Đã tuyển', s.hired_count, s.avg_time_to_hire_days != null ? `TB ${s.avg_time_to_hire_days} ngày/hồ sơ` : '', 'fa-circle-check', 'emerald')}
+        ${dashboardKpiCard('Tỷ lệ nhận Offer', s.offer_acceptance_rate != null ? `${Math.round(s.offer_acceptance_rate * 100)}%` : '-', '', 'fa-file-signature', 'amber')}
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 lg:col-span-2">
+          <h4 class="font-bold text-slate-800 text-sm mb-4"><i class="fa-solid fa-filter text-indigo-500 mr-2"></i>Phễu tuyển dụng theo trạng thái</h4>
+          <div class="h-72"><canvas id="chart-funnel"></canvas></div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200">
+          <h4 class="font-bold text-slate-800 text-sm mb-4"><i class="fa-solid fa-chart-pie text-indigo-500 mr-2"></i>Nguồn ứng viên</h4>
+          <div class="h-72 flex items-center justify-center"><canvas id="chart-source"></canvas></div>
+        </div>
+      </div>
+      ${s.hr_performance.length ? `
+      <div class="bg-white p-6 rounded-2xl border border-slate-200">
+        <h4 class="font-bold text-slate-800 text-sm mb-4"><i class="fa-solid fa-medal text-indigo-500 mr-2"></i>Hiệu suất từng HR</h4>
+        <div class="h-64"><canvas id="chart-hr-performance"></canvas></div>
+      </div>` : ''}
+    </div>`;
+
+      _renderChart('chart-funnel', {
+        type: 'bar',
+        data: {
+          labels: KANBAN_COLUMNS.map(k => STATUS_LABEL[k]),
+          datasets: [{ label: 'Số hồ sơ', data: KANBAN_COLUMNS.map(k => s.status_breakdown[k] || 0), backgroundColor: '#6366f1', borderRadius: 6 }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+      });
+
+      const sourceLabels = Object.keys(s.source_breakdown);
+      _renderChart('chart-source', {
+        type: 'doughnut',
+        data: {
+          labels: sourceLabels,
+          datasets: [{ data: sourceLabels.map(l => s.source_breakdown[l]), backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#8b5cf6'] }],
+        },
+        options: { responsive: true, maintainAspectRatio: false },
+      });
+
+      if (s.hr_performance.length) {
+        _renderChart('chart-hr-performance', {
+          type: 'bar',
+          data: {
+            labels: s.hr_performance.map(h => h.hr_name),
+            datasets: [
+              { label: 'Hồ sơ đã xử lý', data: s.hr_performance.map(h => h.candidates_processed), backgroundColor: '#94a3b8', borderRadius: 6 },
+              { label: 'Đã tuyển', data: s.hr_performance.map(h => h.hired), backgroundColor: '#10b981', borderRadius: 6 },
+            ],
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } },
+        });
+      }
+    }
+
+    async function exportDashboardReport() {
+      let s;
+      try { s = await api('/dashboard/summary'); } catch (err) { apiErrorToast(err, 'Không tải được số liệu Dashboard: '); return; }
+
+      const rows = [
+        ['BÁO CÁO DASHBOARD TUYỂN DỤNG'],
+        [`Ngày xuất: ${formatDateTime(new Date())}`],
+        [],
+        ['CHỈ SỐ TỔNG QUAN'],
+        ['Tổng tin tuyển dụng', s.total_jobs],
+        ['Tin đang đăng', s.published_jobs],
+        ['Tổng hồ sơ ứng tuyển', s.total_applications],
+        ['Đã tuyển', s.hired_count],
+        ['Tỷ lệ nhận Offer', s.offer_acceptance_rate != null ? `${Math.round(s.offer_acceptance_rate * 100)}%` : 'Chưa có dữ liệu'],
+        ['Thời gian tuyển trung bình (ngày)', s.avg_time_to_hire_days != null ? s.avg_time_to_hire_days : 'Chưa có dữ liệu'],
+        [],
+        ['PHỄU TUYỂN DỤNG THEO GIAI ĐOẠN'],
+        ['Giai đoạn', 'Số hồ sơ'],
+        ...KANBAN_COLUMNS.map(k => [STATUS_LABEL[k], s.status_breakdown[k] || 0]),
+        [],
+        ['PHÂN BỐ THEO NGUỒN ỨNG VIÊN'],
+        ['Nguồn', 'Số hồ sơ'],
+        ...Object.entries(s.source_breakdown),
+      ];
+
+      if (s.hr_performance.length) {
+        rows.push([], ['HIỆU SUẤT TỪNG HR'], ['Tên HR', 'Hồ sơ đã xử lý', 'Đã tuyển']);
+        s.hr_performance.forEach(h => rows.push([h.hr_name, h.candidates_processed, h.hired]));
+      }
+
+      downloadCsv(`bao-cao-dashboard-${new Date().toISOString().slice(0, 10)}.csv`, [], rows);
+      showToast('Đã xuất báo cáo Dashboard.', 'success');
+    }
+
+    function dashboardKpiCard(label, value, sub, icon, color) {
+      return `
+    <div class="bg-white p-5 rounded-2xl border border-slate-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">${label}</p>
+          <h3 class="text-2xl font-extrabold mt-1 text-slate-800">${value}</h3>
+          ${sub ? `<span class="text-[11px] text-slate-500 font-semibold block mt-1">${sub}</span>` : ''}
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-${color}-50 text-${color}-600 flex items-center justify-center"><i class="fa-solid ${icon} text-xl"></i></div>
+      </div>
+    </div>`;
+    }
+
+    /* ==================================================================
+       JOBS TAB
+       ================================================================== */
+    async function renderJobsTab() {
+      const jobs = await api('/jobs');
+      state.cache.jobs = jobs;
+      const isCandidate = state.currentUser.role === 'CANDIDATE';
+
+      const fmtSalary = (min, max) => {
+        const f = (n) => n ? `${(n / 1000000).toLocaleString('vi-VN')} triệu` : null;
+        const a = f(min), b = f(max);
+        return a && b ? `${a} – ${b}` : (a || b || 'Thỏa thuận');
+      };
+
+      const cards = jobs.map(j => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 cursor-pointer hover:shadow-md transition" onclick="openJobDetailModal('${j.business_id}')">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="font-bold text-slate-800">${escapeHtml(j.title)}</h3>
+          <p class="text-xs text-slate-400">${escapeHtml(j.department_name || '')} · ${escapeHtml(j.location)}</p>
+          <p class="text-xs text-indigo-600 font-semibold mt-1">${fmtSalary(j.salary_min, j.salary_max)}</p>
+          ${!isCandidate ? `<p class="text-[11px] text-slate-400 mt-1">HR phụ trách: <span class="font-bold">${j.assigned_hr_name ? escapeHtml(j.assigned_hr_name) : 'Chưa gán'}</span></p>` : ''}
+        </div>
+        <span class="text-[10px] font-bold px-2 py-1 rounded-full ${j.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${j.status}</span>
+      </div>
+      <div class="flex gap-2 pt-2 border-t border-slate-100" onclick="event.stopPropagation()">
+        ${isCandidate && j.status === 'PUBLISHED' ? `<button onclick="openApplyModal('${j.business_id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold">Ứng tuyển ngay</button>` : ''}
+        ${!isCandidate && j.status !== 'PUBLISHED' ? `<button onclick="publishJob('${j.business_id}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Duyệt &amp; Đăng tin</button>` : ''}
+        ${!isCandidate && (state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') ? `<button onclick="assignHrToJob('${j.business_id}')" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 rounded-xl text-xs font-bold">Gán HR</button>` : ''}
+        ${!isCandidate && (state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') ? `<button onclick='openEditJobModal(${JSON.stringify(j)})' class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 rounded-xl text-xs font-bold">Sửa</button>` : ''}
+      </div>
+    </div>`).join('');
+
+      document.getElementById('tab-content').innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in">
+      ${cards || `<p class="text-slate-400 text-sm col-span-full text-center py-10">Chưa có tin tuyển dụng nào.</p>`}
+    </div>`;
+    }
+
+    const EMPLOYMENT_TYPE_LABEL = { FULL_TIME: 'Toàn thời gian', PART_TIME: 'Bán thời gian', CONTRACT: 'Hợp đồng', INTERN: 'Thực tập' };
+
+    // v2.3 Section 8: Job Detail day du - route /jobs/JOB0001 khong ton tai o
+    // SPA nay (khong co client-side router), nen dung modal thay the, load THAT
+    // tu backend (GET /jobs/{id}) - khong hard-code bat ky field nao.
+    async function openJobDetailModal(jobBusinessId) {
+      let job;
+      try { job = await api(`/jobs/${jobBusinessId}`); } catch (err) { apiErrorToast(err, 'Không tải được tin tuyển dụng: '); return; }
+      const isCandidate = state.currentUser.role === 'CANDIDATE';
+      const fmtSalary = (min, max) => {
+        const f = (n) => n ? `${Number(n).toLocaleString('vi-VN')} VNĐ` : null;
+        const a = f(min), b = f(max);
+        return a && b ? `${a} – ${b}` : (a || b || 'Thỏa thuận');
+      };
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-start">
+      <div>
+        <h3 class="font-bold text-lg">${escapeHtml(job.title)}</h3>
+        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(job.department_name || '')} · ${escapeHtml(job.location)}</p>
+      </div>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <div class="p-6 space-y-4 text-sm">
+      <div class="flex flex-wrap gap-2">
+        <span class="text-[11px] font-bold px-2 py-1 rounded-full ${job.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${job.status}</span>
+        <span class="text-[11px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">${EMPLOYMENT_TYPE_LABEL[job.employment_type] || job.employment_type}</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3 bg-slate-50 rounded-xl p-4">
+        <div><span class="block text-[11px] font-bold uppercase text-slate-400">Mức lương</span><span class="font-semibold text-slate-700">${fmtSalary(job.salary_min, job.salary_max)}</span></div>
+        <div><span class="block text-[11px] font-bold uppercase text-slate-400">Địa điểm</span><span class="font-semibold text-slate-700">${escapeHtml(job.location)}</span></div>
+        <div><span class="block text-[11px] font-bold uppercase text-slate-400">Số lượng tuyển</span><span class="font-semibold text-slate-700">${job.quantity}</span></div>
+        <div><span class="block text-[11px] font-bold uppercase text-slate-400">Ngày đăng</span><span class="font-semibold text-slate-700">${job.published_at ? formatDate(job.published_at) : 'Chưa đăng'}</span></div>
+        <div><span class="block text-[11px] font-bold uppercase text-slate-400">Hạn ứng tuyển</span><span class="font-semibold text-slate-700">${job.deadline ? formatDate(job.deadline) : 'Không giới hạn'}</span></div>
+      </div>
+      <div><h4 class="font-bold text-xs uppercase text-slate-500 mb-1">Mô tả công việc</h4><p class="text-slate-600 whitespace-pre-wrap">${escapeHtml(job.description)}</p></div>
+      <div><h4 class="font-bold text-xs uppercase text-slate-500 mb-1">Yêu cầu ứng viên</h4><p class="text-slate-600 whitespace-pre-wrap">${escapeHtml(job.requirements)}</p></div>
+      ${isCandidate && job.status === 'PUBLISHED' ? `<button onclick="closeModal(); openApplyModal('${job.business_id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold"><i class="fa-solid fa-paper-plane mr-1"></i> Ứng tuyển ngay</button>` : ''}
+    </div>`, 'max-w-2xl');
+    }
+
+    function openCreateJobModal() {
+      const depts = state.cache.departments;
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Tạo tin tuyển dụng</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateJob(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tiêu đề *</label>
+        <input id="job-title" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Phòng ban *</label>
+        <select id="job-department" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          ${depts.map(d => `<option value="${d.business_id}">${escapeHtml(d.name)}</option>`).join('') || '<option value="">(chưa có phòng ban)</option>'}
+        </select></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mô tả công việc *</label>
+        <textarea id="job-description" required rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Yêu cầu ứng viên *</label>
+        <textarea id="job-requirements" required rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương từ (VNĐ)</label>
+          <input id="job-salary-min" type="number" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương đến (VNĐ)</label>
+          <input id="job-salary-max" type="number" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Địa điểm *</label>
+          <input id="job-location" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hình thức *</label>
+          <select id="job-employment-type" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            <option value="FULL_TIME">Toàn thời gian</option><option value="PART_TIME">Bán thời gian</option>
+            <option value="CONTRACT">Hợp đồng</option><option value="INTERN">Thực tập</option>
+          </select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số lượng cần tuyển</label>
+          <input id="job-quantity" type="number" min="1" value="1" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hạn ứng tuyển</label>
+          <input id="job-deadline" type="date" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          <p class="text-[11px] text-slate-400 mt-1">Bỏ trống = không giới hạn</p></div>
+      </div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Tạo (nháp)</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleCreateJob(event) {
+      event.preventDefault();
+      const payload = {
+        title: val('job-title'), department_business_id: val('job-department'),
+        description: val('job-description'), requirements: val('job-requirements'),
+        salary_min: val('job-salary-min') || null, salary_max: val('job-salary-max') || null,
+        quantity: parseInt(val('job-quantity') || '1', 10), location: val('job-location'),
+        employment_type: val('job-employment-type'), deadline: val('job-deadline') || null,
+      };
+      try {
+        await api('/jobs', { method: 'POST', body: payload });
+        closeModal(); showToast('Đã tạo tin tuyển dụng (DRAFT).', 'success');
+        switchTab('jobs');
+      } catch (err) { apiErrorToast(err, 'Tạo tin thất bại: '); }
+    }
+
+    // Sua tin tuyen dung - cho phep du dang DRAFT hay da PUBLISHED (theo yeu
+    // cau nguoi dung). Khong sua duoc phong ban/HR phu trach qua form nay (da
+    // co "Gan HR" rieng, doi phong ban can nghiep vu rieng ngoai pham vi 1
+    // form sua don gian).
+    function openEditJobModal(j) {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa tin tuyển dụng</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleUpdateJob(event, '${j.business_id}')" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tiêu đề *</label>
+        <input id="ej-title" required value="${escapeHtml(j.title)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mô tả công việc *</label>
+        <textarea id="ej-description" required rows="3" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(j.description)}</textarea></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Yêu cầu ứng viên *</label>
+        <textarea id="ej-requirements" required rows="3" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(j.requirements)}</textarea></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương từ (VNĐ)</label>
+          <input id="ej-salary-min" type="number" value="${j.salary_min ?? ''}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương đến (VNĐ)</label>
+          <input id="ej-salary-max" type="number" value="${j.salary_max ?? ''}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Địa điểm *</label>
+          <input id="ej-location" required value="${escapeHtml(j.location)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hình thức *</label>
+          <select id="ej-employment-type" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            <option value="FULL_TIME" ${j.employment_type === 'FULL_TIME' ? 'selected' : ''}>Toàn thời gian</option>
+            <option value="PART_TIME" ${j.employment_type === 'PART_TIME' ? 'selected' : ''}>Bán thời gian</option>
+            <option value="CONTRACT" ${j.employment_type === 'CONTRACT' ? 'selected' : ''}>Hợp đồng</option>
+            <option value="INTERN" ${j.employment_type === 'INTERN' ? 'selected' : ''}>Thực tập</option>
+          </select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số lượng cần tuyển</label>
+          <input id="ej-quantity" type="number" min="1" value="${j.quantity}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hạn ứng tuyển</label>
+          <input id="ej-deadline" type="date" value="${j.deadline ? j.deadline.slice(0, 10) : ''}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      </div>
+      <div class="pt-2 flex justify-end gap-3 sticky bottom-0 bg-white">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu thay đổi</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleUpdateJob(event, jobBusinessId) {
+      event.preventDefault();
+      const payload = {
+        title: val('ej-title'), description: val('ej-description'), requirements: val('ej-requirements'),
+        salary_min: val('ej-salary-min') || null, salary_max: val('ej-salary-max') || null,
+        quantity: parseInt(val('ej-quantity') || '1', 10), location: val('ej-location'),
+        employment_type: val('ej-employment-type'),
+      };
+      if (val('ej-deadline')) payload.deadline = val('ej-deadline');
+      try {
+        await api(`/jobs/${jobBusinessId}`, { method: 'PUT', body: payload });
+        closeModal(); showToast('Đã lưu thay đổi tin tuyển dụng.', 'success');
+        switchTab('jobs');
+      } catch (err) { apiErrorToast(err, 'Lưu thất bại: '); }
+    }
+
+    async function assignHrToJob(jobId) {
+      let hrList = [];
+      try { hrList = await api('/users?role=HR'); } catch (err) { apiErrorToast(err, 'Không tải được danh sách HR: '); return; }
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Gán HR phụ trách</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleAssignHr(event, '${jobId}')" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Chọn HR *</label>
+        <select id="assign-hr-select" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          ${hrList.map(u => `<option value="${u.business_id}">${escapeHtml(u.full_name)}</option>`).join('') || '<option value="">(chưa có HR nào - vào tab "Đội ngũ HR" để thêm)</option>'}
+        </select></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Gán</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleAssignHr(event, jobId) {
+      event.preventDefault();
+      const hrBusinessId = val('assign-hr-select');
+      if (!hrBusinessId) return;
+      try {
+        await api(`/jobs/${jobId}/assign-hr`, { method: 'POST', body: { hr_business_id: hrBusinessId } });
+        closeModal();
+        showToast('Đã gán HR phụ trách.', 'success');
+        switchTab('jobs');
+      } catch (err) { apiErrorToast(err, 'Gán HR thất bại: '); }
+    }
+
+    async function publishJob(jobId) {
+      try {
+        await api(`/jobs/${jobId}/publish`, { method: 'POST' });
+        showToast('Đã đăng tin tuyển dụng.', 'success');
+        switchTab('jobs');
+      } catch (err) { apiErrorToast(err, 'Đăng tin thất bại: '); }
+    }
+
+    /* ==================================================================
+       APPLY (CANDIDATE)
+       ================================================================== */
+    let currentApplyIdempotencyKey = null;
+
+    async function openApplyModal(jobBusinessId) {
+      const job = state.cache.jobs.find(j => j.business_id === jobBusinessId);
+      currentApplyIdempotencyKey = crypto.randomUUID();
+      const u = state.currentUser;
+      // v2.3 Section 9.1: Nguon ho so lay tu System Configuration -> Candidate
+      // Sources, khong hard-code o frontend.
+      let sources = [];
+      try { sources = (await api('/candidate-sources')).filter(s => s.status === 'ACTIVE'); } catch (e) { }
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Ứng tuyển: ${escapeHtml(job?.title || '')}</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleApply(event, '${jobBusinessId}')" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ tên *</label>
+        <input id="apply-fullname" required value="${escapeHtml(u.full_name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email *</label>
+        <input id="apply-email" type="email" required value="${escapeHtml(u.email)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại *</label>
+        <input id="apply-phone" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nguồn hồ sơ *</label>
+        <select id="apply-source" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          <option value="">- Vui lòng chọn nguồn hồ sơ -</option>
+          ${sources.map(s => `<option value="${s.business_id}">${escapeHtml(s.name)}</option>`).join('')}
+        </select>
+        ${!sources.length ? '<p class="text-[11px] text-amber-600 mt-1">Hệ thống chưa cấu hình Nguồn hồ sơ nào - liên hệ quản trị viên.</p>' : ''}</div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tải lên CV (PDF hoặc DOCX, tối đa 10MB)</label>
+        <input type="file" id="apply-resume-file" accept=".pdf,.docx" class="w-full p-2 border border-slate-200 rounded-xl text-xs bg-slate-50"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hoặc dán nội dung CV trực tiếp</label>
+        <textarea id="apply-resume-text" rows="3" placeholder="Dán tóm tắt kinh nghiệm, kỹ năng... (bỏ qua nếu đã tải file ở trên)" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+      <label class="flex items-start gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+        <input type="checkbox" id="apply-ai-consent" required class="mt-0.5">
+        <span>Tôi đồng ý cho hồ sơ của mình được xử lý bởi hệ thống AI để đánh giá mức độ phù hợp với vị trí ứng tuyển.</span>
+      </label>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Nộp hồ sơ</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleApply(event, jobBusinessId) {
+      event.preventDefault();
+      const sourceBusinessId = val('apply-source');
+      if (!sourceBusinessId) {
+        // Section 9.2: khong cho submit neu chua chon source.
+        showToast('Vui lòng chọn nguồn hồ sơ.', 'error');
+        return;
+      }
+      const payload = {
+        job_business_id: jobBusinessId,
+        candidate_full_name: val('apply-fullname'),
+        candidate_email: val('apply-email'),
+        candidate_phone: val('apply-phone'),
+        source_business_id: sourceBusinessId,
+        ai_consent: document.getElementById('apply-ai-consent').checked,
+        resume_text: val('apply-resume-text') || null,
+      };
+      const fileInput = document.getElementById('apply-resume-file');
+      const resumeFile = fileInput && fileInput.files.length ? fileInput.files[0] : null;
+
+      try {
+        const app = await api('/applications', {
+          method: 'POST', body: payload,
+          headers: { 'Idempotency-Key': currentApplyIdempotencyKey },
+        });
+
+        if (resumeFile) {
+          try {
+            await apiUploadFile(`/applications/${app.business_id}/resume`, resumeFile);
+          } catch (uploadErr) {
+            apiErrorToast(uploadErr, 'Đã nộp hồ sơ nhưng upload CV thất bại: ');
+          }
+        }
+
+        closeModal();
+        openApplyConfirmation(app);
+      } catch (err) { showToast(`Nộp hồ sơ thất bại: ${translateApplyError(err)}`, 'error'); }
+    }
+
+    function translateApplyError(err) {
+      const msg = err.message || '';
+      if (msg.startsWith('ALREADY_HAS_ACTIVE_APPLICATION_FOR_THIS_JOB')) {
+        return 'Bạn đang có một hồ sơ khác cho vị trí này đang được xử lý (đã qua bước sàng lọc) - vui lòng chờ kết quả hồ sơ hiện tại trước khi nộp lại.';
+      }
+      return msg || 'Đã có lỗi xảy ra.';
+    }
+
+    // v2.3 Section 11: Application Confirmation - hien thi day du Application
+    // ID/Job/Ngay ung tuyen/Trang thai/Nguon ho so, khong chi 1 toast thoang qua.
+    function openApplyConfirmation(app) {
+      renderModal(`
+    <div class="p-8 text-center space-y-4">
+      <div class="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl"><i class="fa-solid fa-circle-check"></i></div>
+      <h3 class="font-bold text-lg text-slate-800">${app.is_new ? 'Ứng tuyển thành công!' : 'Hồ sơ đã tồn tại - không tạo trùng.'}</h3>
+      <div class="bg-slate-50 rounded-xl p-4 text-left text-sm space-y-1.5 border border-slate-200">
+        <p><span class="text-slate-400">Application ID:</span> <span class="font-bold font-mono">${app.business_id}</span></p>
+        <p><span class="text-slate-400">Vị trí:</span> <span class="font-semibold">${escapeHtml(app.job_title)}</span></p>
+        <p><span class="text-slate-400">Ngày ứng tuyển:</span> <span class="font-semibold">${formatDateTime(app.applied_at)}</span></p>
+        <p><span class="text-slate-400">Trạng thái:</span> <span class="font-semibold">${STATUS_LABEL[app.status] || app.status}</span></p>
+        <p><span class="text-slate-400">Nguồn hồ sơ:</span> <span class="font-semibold">${escapeHtml(app.source || '-')}</span></p>
+      </div>
+      <button onclick="closeModal(); switchTab('my-applications');" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-bold">Xem hồ sơ của tôi</button>
+    </div>`);
+    }
+
+    /* ==================================================================
+       MY APPLICATIONS (CANDIDATE)
+       ================================================================== */
+    async function renderMyApplicationsTab() {
+      const apps = await api('/applications');
+      if (!apps.length) {
+        document.getElementById('tab-content').innerHTML = `<p class="text-slate-400 text-sm text-center py-16">Bạn chưa ứng tuyển vị trí nào. Sang tab "Việc làm" để bắt đầu.</p>`;
+        return;
+      }
+      const rows = apps.map(a => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm">${escapeHtml(a.job_title)}</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Mã hồ sơ ứng tuyển: ${a.business_id}</p>
+        <span class="inline-block mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">${STATUS_LABEL[a.status] || a.status}</span>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openMyApplicationDetail('${a.business_id}')" class="text-xs font-bold text-indigo-600 hover:underline">Chi tiết</button>
+      </div>
+    </div>`).join('');
+      document.getElementById('tab-content').innerHTML = `
+    <div class="space-y-4 animate-fade-in">
+      <div class="flex justify-end">
+        <button onclick="openMyProfileEditModal('${apps[0].candidate_business_id}')" class="text-xs font-bold px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50">
+          <i class="fa-solid fa-user-pen mr-1"></i> Sửa thông tin cá nhân
+        </button>
+      </div>
+      ${rows}
+    </div>`;
+    }
+
+    /* ==================================================================
+       SUA THONG TIN CA NHAN (Candidate tu sua) - backend PUT /candidates/{id}
+       da RBAC san (candidate.user_id == current_user.id), tab "Ho so cua toi"
+       chi hien nut nay khi da co it nhat 1 Application (Candidate record chi
+       duoc tao luc apply lan dau - get-or-create theo email trong
+       application_service, xem candidate_service._get_or_create_candidate).
+       ================================================================== */
+    async function openMyProfileEditModal(candidateBusinessId) {
+      let candidate;
+      try { candidate = await api(`/candidates/${candidateBusinessId}`); } catch (err) { apiErrorToast(err, 'Không tải được thông tin cá nhân: '); return; }
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa thông tin cá nhân</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleSaveMyProfile(event, '${candidate.business_id}')" class="p-6 space-y-3">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ tên *</label>
+        <input id="mp-fullname" required value="${escapeHtml(candidate.full_name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Giới tính</label>
+        <select id="mp-gender" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          <option value="">- Không chọn -</option>
+          <option value="MALE" ${candidate.gender === 'MALE' ? 'selected' : ''}>Nam</option>
+          <option value="FEMALE" ${candidate.gender === 'FEMALE' ? 'selected' : ''}>Nữ</option>
+          <option value="OTHER" ${candidate.gender === 'OTHER' ? 'selected' : ''}>Khác</option>
+        </select></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại</label>
+        <input id="mp-phone" value="${escapeHtml(candidate.phone)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
+        <input value="${escapeHtml(candidate.email)}" disabled class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-400"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tóm tắt kỹ năng</label>
+        <textarea id="mp-skills" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(candidate.skills_summary || '')}</textarea></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tóm tắt kinh nghiệm</label>
+        <textarea id="mp-experience" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(candidate.experience_summary || '')}</textarea></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`, 'max-w-lg');
+    }
+
+    async function handleSaveMyProfile(event, candidateBusinessId) {
+      event.preventDefault();
+      try {
+        await api(`/candidates/${candidateBusinessId}`, {
+          method: 'PUT',
+          body: {
+            full_name: val('mp-fullname'),
+            gender: val('mp-gender') || null,
+            phone: val('mp-phone') || null,
+            skills_summary: val('mp-skills') || null,
+            experience_summary: val('mp-experience') || null,
+          },
+        });
+        showToast('Cập nhật thông tin cá nhân thành công.', 'success');
+        closeModal();
+      } catch (err) { apiErrorToast(err, 'Cập nhật thất bại: '); }
+    }
+
+    async function openMyApplicationDetail(appBusinessId) {
+      const app = await api(`/applications/${appBusinessId}`);
+      let offerHtml = '';
+      if (['OFFER', 'HIRED'].includes(app.status)) {
+        try {
+          const offers = await api(`/offers?application_business_id=${appBusinessId}`);
+          const offer = offers[0];
+          if (offer) offerHtml = renderCandidateOfferSection(offer);
+        } catch (e) { /* khong co offer */ }
+      }
+
+      const timeline = PIPELINE_ORDER.map(s => {
+        const reached = PIPELINE_ORDER.indexOf(app.status) >= PIPELINE_ORDER.indexOf(s) && !['REJECTED', 'WITHDRAWN', 'ARCHIVED'].includes(app.status);
+        return `<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full ${reached ? 'bg-indigo-600' : 'bg-slate-200'}"></div><span class="text-xs ${reached ? 'font-bold text-slate-700' : 'text-slate-400'}">${STATUS_LABEL[s]}</span></div>`;
+      }).join('<div class="flex-1 h-px bg-slate-200 mx-1"></div>');
+
+      const canWithdraw = ['NEW', 'SCREENING', 'SHORTLISTED', 'INTERVIEW'].includes(app.status);
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-lg">${escapeHtml(app.job_title)}</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Mã hồ sơ ứng tuyển: ${app.business_id}</p>
+      </div>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <div class="p-6 space-y-6">
+      <div class="flex items-center flex-wrap gap-1">${['REJECTED', 'WITHDRAWN', 'ARCHIVED'].includes(app.status) ? `<span class="text-xs font-bold text-rose-600">Trạng thái kết thúc: ${STATUS_LABEL[app.status]}</span>` : timeline}</div>
+      <div class="border-t border-slate-100 pt-4 space-y-3">
+        <div><h4 class="font-bold text-xs uppercase text-slate-500 mb-1">Mô tả công việc</h4><p class="text-sm text-slate-600 whitespace-pre-wrap">${escapeHtml(app.job_description)}</p></div>
+        <div><h4 class="font-bold text-xs uppercase text-slate-500 mb-1">Yêu cầu ứng viên</h4><p class="text-sm text-slate-600 whitespace-pre-wrap">${escapeHtml(app.job_requirements)}</p></div>
+      </div>
+      ${renderResumeSection(app)}
+      ${!['REJECTED', 'WITHDRAWN', 'ARCHIVED', 'HIRED'].includes(app.status) ? `
+      <div class="border-t border-slate-100 pt-4">
+        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">${app.has_resume ? 'Cập nhật CV (PDF/DOCX)' : 'Tải lên CV (PDF/DOCX)'}</label>
+        <div class="flex gap-2">
+          <input type="file" id="my-resume-file" accept=".pdf,.docx" class="flex-1 p-2 border border-slate-200 rounded-xl text-xs bg-slate-50">
+          <button onclick="uploadMyResume('${app.business_id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold">Tải lên</button>
+        </div>
+      </div>` : ''}
+      ${offerHtml}
+      ${canWithdraw ? `<button onclick="withdrawApplication('${app.business_id}')" class="w-full border border-rose-200 text-rose-600 hover:bg-rose-50 py-2 rounded-xl text-sm font-bold">Rút hồ sơ ứng tuyển</button>` : ''}
+    </div>`, 'max-w-xl');
+    }
+
+    async function uploadMyResume(appBusinessId) {
+      const fileInput = document.getElementById('my-resume-file');
+      if (!fileInput || !fileInput.files.length) { showToast('Vui lòng chọn file trước.', 'info'); return; }
+      try {
+        await apiUploadFile(`/applications/${appBusinessId}/resume`, fileInput.files[0]);
+        showToast('Đã tải lên CV.', 'success');
+        openMyApplicationDetail(appBusinessId);
+      } catch (err) { apiErrorToast(err, 'Tải lên CV thất bại: '); }
+    }
+
+    function renderResumeSection(app) {
+      if (!app.has_resume) return '';
+      return `
+    <div class="border-t border-slate-100 pt-4">
+      <h4 class="font-bold text-sm text-slate-700 mb-2">
+        <i class="fa-solid fa-file-lines text-slate-400 mr-1"></i> CV${app.resume_file_name ? `: ${escapeHtml(app.resume_file_name)}` : ''}
+      </h4>
+      ${app.resume_text ? `<p class="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3 whitespace-pre-line max-h-40 overflow-y-auto">${escapeHtml(app.resume_text)}</p>` : `<p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl p-3">Không trích xuất được nội dung text từ file (có thể là PDF dạng ảnh scan) - cần xem thủ công.</p>`}
+    </div>`;
+    }
+
+    function renderCandidateOfferSection(offer) {
+      const canRespond = offer.status === 'SENT';
+      return `
+    <div class="border border-indigo-100 bg-indigo-50/50 rounded-xl p-4 space-y-3">
+      <h4 class="font-bold text-sm text-indigo-700">Thư mời nhận việc - ${escapeHtml(offer.job_title || '')}</h4>
+      <div class="text-xs text-slate-600 space-y-1">
+        <p>Trạng thái: <span class="font-bold">${OFFER_STATUS_LABEL[offer.status]}</span></p>
+        <p>Lương chính thức: <span class="font-bold">${Number(offer.salary).toLocaleString('vi-VN')} VNĐ</span></p>
+        <p>Lương thử việc: <span class="font-bold">${Number(offer.probation_salary).toLocaleString('vi-VN')} VNĐ</span></p>
+      </div>
+      ${canRespond ? `
+      <div class="flex gap-2 pt-2">
+        <button onclick="respondOffer('${offer.business_id}', true)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold">Chấp nhận Offer</button>
+        <button onclick="respondOffer('${offer.business_id}', false)" class="flex-1 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 py-2 rounded-xl text-xs font-bold">Từ chối</button>
+      </div>` : ''}
+    </div>`;
+    }
+
+    async function respondOffer(offerBusinessId, accept) {
+      try {
+        await api(`/offers/${offerBusinessId}/respond`, { method: 'POST', body: { response: accept ? 'ACCEPTED' : 'DECLINED' } });
+        showToast(accept ? 'Đã chấp nhận Offer! Chúc mừng.' : 'Đã từ chối Offer.', 'success');
+        closeModal(); switchTab('my-applications');
+      } catch (err) { apiErrorToast(err, 'Phản hồi Offer thất bại: '); }
+    }
+
+    async function withdrawApplication(appBusinessId) {
+      if (!confirm('Bạn chắc chắn muốn rút hồ sơ ứng tuyển này?')) return;
+      try {
+        await api(`/applications/${appBusinessId}/withdraw`, { method: 'PUT' });
+        showToast('Đã rút hồ sơ.', 'success');
+        closeModal(); switchTab('my-applications');
+      } catch (err) { apiErrorToast(err, 'Rút hồ sơ thất bại: '); }
+    }
+
+    /* ==================================================================
+       PIPELINE / KANBAN (HR, HR_MANAGER, ADMIN)
+       ================================================================== */
+    let pipelineFilters = { job_business_id: '', search: '' };
+    let pipelineViewMode = localStorage.getItem('ats_pipeline_view') || 'kanban'; // v2.2 Section 7: Kanban | Table
+
+    function matchScoreBadge(score) {
+      if (score === null || score === undefined) return '';
+      const cls = score >= 80 ? 'bg-emerald-100 text-emerald-700' : score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
+      return `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cls}"><i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>${score}</span>`;
+    }
+
+    function setPipelineViewMode(mode) {
+      pipelineViewMode = mode;
+      localStorage.setItem('ats_pipeline_view', mode);
+      renderPipelineTab();
+    }
+
+    function renderKanbanColumns(apps) {
+      return KANBAN_COLUMNS.map(status => {
+        const items = apps.filter(a => a.status === status);
+        return `
+      <div class="kanban-col shrink-0 bg-slate-100 rounded-2xl p-3 flex flex-col" data-status="${status}"
+           ondragover="event.preventDefault(); this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="handleKanbanDrop(event, '${status}')">
+        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center justify-between">
+          <span>${STATUS_LABEL[status]}</span><span class="bg-white px-1.5 py-0.5 rounded-full">${items.length}</span>
+        </h4>
+        <div class="space-y-2 min-h-[80px]">
+          ${items.map(a => `
+            <div class="kanban-card bg-white rounded-xl p-3 shadow-sm border border-slate-200 text-xs space-y-1.5"
+                 draggable="true" ondragstart="draggedApp='${a.business_id}'; this.classList.add('dragging')" ondragend="this.classList.remove('dragging')"
+                 onclick="openHrApplicationDetail('${a.business_id}')">
+              <div class="flex items-start justify-between gap-1">
+                <p class="font-bold text-slate-700 leading-tight">${escapeHtml(a.candidate_full_name)}</p>
+                ${matchScoreBadge(a.match_score)}
+              </div>
+              <p class="text-slate-400 truncate">${escapeHtml(a.candidate_email)}</p>
+              <p class="text-indigo-500 font-semibold truncate"><i class="fa-solid fa-briefcase mr-1"></i>${escapeHtml(a.job_title)}</p>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px] text-slate-400">
+                <span>${a.business_id}</span>
+                <span class="flex items-center gap-1.5">
+                  ${a.has_resume ? '<i class="fa-solid fa-file-lines text-slate-400" title="Có CV"></i>' : '<i class="fa-regular fa-file text-slate-300" title="Chưa có CV"></i>'}
+                  ${a.needs_manual_review ? '<i class="fa-solid fa-triangle-exclamation text-amber-500" title="Cần sàng lọc thủ công"></i>' : ''}
+                </span>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+      }).join('');
+    }
+
+    // v2.2 Section 7-11: che do Table thay the/bo sung Kanban - 6 cot bat buoc:
+    // Ung vien / Vi tri / Phong ban / Giai doan / Nguon / Thao tac.
+    const GENDER_LABEL = { MALE: 'Nam', FEMALE: 'Nữ', OTHER: 'Khác' };
+
+    function renderCandidateTable(apps) {
+      const role = state.currentUser.role;
+      const canEdit = role === 'HR' || role === 'HR_MANAGER' || role === 'ADMIN';
+      const canArchive = role === 'HR_MANAGER' || role === 'ADMIN';
+      const activeSources = (state.cache.sources || []).filter(s => s.status === 'ACTIVE');
+
+      if (!apps.length) {
+        return `<div class="bg-white rounded-2xl border border-slate-200 p-16 text-center text-slate-400 text-sm">Không tìm thấy ứng viên phù hợp.</div>`;
+      }
+
+      // v2.3 Section 3/4: Giai doan va Nguon la COMBOBOX song song voi Kanban
+      // (cung KANBAN_COLUMNS - dong bo State Machine that, khong hardcode rieng
+      // cho Table) va cung API PUT /applications/{id}/status. Nguon lay tu
+      // System Configuration (candidate_sources ACTIVE) qua PUT /applications/{id}.
+      // Neu Application.status hien tai KHONG con trong danh sach ACTIVE cua
+      // nguon (source bi disable sau khi da chon) van hien thi de khong mat du lieu.
+      const rows = apps.map(a => {
+        const sourceOptions = activeSources.some(s => s.business_id === a.source_business_id)
+          ? activeSources
+          : (a.source_business_id ? [{ business_id: a.source_business_id, name: a.source || a.source_business_id }, ...activeSources] : activeSources);
+        return `
+    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm">
+      <td class="py-3 px-4">
+        <button onclick="openCandidateDetailModal('${a.candidate_business_id}')" class="font-bold text-slate-700 hover:text-indigo-600 hover:underline text-left" title="Xem hồ sơ ứng viên">${escapeHtml(a.candidate_full_name)}</button>
+        <p class="text-[11px] text-slate-400">${escapeHtml(a.candidate_email)}</p>
+        <p class="text-[11px] text-slate-400">${escapeHtml(a.candidate_phone)}</p>
+      </td>
+      <td class="py-3 px-4 text-slate-600 text-xs">${a.candidate_gender ? (GENDER_LABEL[a.candidate_gender] || a.candidate_gender) : '-'}</td>
+      <td class="py-3 px-4 text-slate-600">
+        <p>${escapeHtml(a.job_title)}</p>
+        <p class="text-[11px] text-slate-400">${escapeHtml(a.job_business_id)} · ${escapeHtml(a.department_name || '-')}</p>
+      </td>
+      <td class="py-3 px-4 text-slate-600 text-xs">${a.desired_salary != null ? fmtSalaryValue(a.desired_salary) : '-'}</td>
+      <td class="py-3 px-4">
+        ${canEdit
+            ? `<select onchange="handleTableStageChange(this, '${a.business_id}', '${a.status}')" class="text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-200 bg-indigo-50 text-indigo-600">
+              ${KANBAN_COLUMNS.map(s => `<option value="${s}" ${s === a.status ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`).join('')}
+            </select>`
+            : `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">${STATUS_LABEL[a.status] || a.status}</span>`}
+      </td>
+      <td class="py-3 px-4">
+        ${canEdit
+            ? `<select onchange="handleTableSourceChange(this, '${a.business_id}')" class="text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600">
+              <option value="">- Chưa chọn -</option>
+              ${sourceOptions.map(s => `<option value="${s.business_id}" ${s.business_id === a.source_business_id ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
+            </select>`
+            : `<span class="text-xs text-slate-500">${escapeHtml(a.source || '-')}</span>`}
+      </td>
+      <td class="py-3 px-4 text-slate-500 text-xs max-w-[160px]">
+        <p class="truncate" title="${escapeHtml(a.candidate_skills_summary || '')}">${escapeHtml(a.candidate_skills_summary || '-')}</p>
+      </td>
+      <td class="py-3 px-4 text-slate-500 text-xs max-w-[160px]">
+        <p class="truncate" title="${escapeHtml(a.candidate_experience_summary || '')}">${escapeHtml(a.candidate_experience_summary || '-')}</p>
+      </td>
+      <td class="py-3 px-4">
+        <button onclick="openAIAnalysisModal('${a.business_id}', '${escapeHtml(a.candidate_full_name).replace(/'/g, "\\'")}')" class="text-[11px] font-bold px-2 py-1 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+          <i class="fa-solid fa-brain mr-1"></i>Xem AI
+        </button>
+      </td>
+      <td class="py-3 px-4">
+        <div class="flex items-center gap-3 text-xs font-bold">
+          <button onclick="openCandidateEditModal('${a.business_id}')" class="text-indigo-600 hover:underline" title="Sửa">Sửa</button>
+          <button onclick="openSendEmailModal('${a.business_id}')" class="text-emerald-600 hover:underline" title="Gửi Email">Gửi Email</button>
+          ${canArchive
+            ? `<button onclick="handleArchiveApplicationFromTable('${a.business_id}')" class="text-rose-600 hover:underline" title="Xóa (lưu trữ)">Xóa</button>`
+            : `<button disabled class="text-slate-300 cursor-not-allowed" title="Chỉ HR Manager/Admin được lưu trữ hồ sơ">Xóa</button>`}
+        </div>
+      </td>
+    </tr>`;
+      }).join('');
+
+      return `
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-slate-50 text-[11px] uppercase text-slate-500 font-bold">
+          <tr>
+            <th class="py-3 px-4">Ứng viên</th><th class="py-3 px-4">Giới tính</th><th class="py-3 px-4">Vị trí</th>
+            <th class="py-3 px-4">Lương mong muốn</th><th class="py-3 px-4">Giai đoạn</th><th class="py-3 px-4">Nguồn</th>
+            <th class="py-3 px-4">Kỹ năng</th><th class="py-3 px-4">Kinh nghiệm</th><th class="py-3 px-4">AI Screening</th>
+            <th class="py-3 px-4">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+    }
+
+    async function handleTableStageChange(selectEl, appId, oldStatus) {
+      const newStatus = selectEl.value;
+      if (newStatus === oldStatus) return;
+
+      const isBackward = PIPELINE_ORDER.includes(oldStatus) && PIPELINE_ORDER.includes(newStatus)
+        && PIPELINE_ORDER.indexOf(newStatus) < PIPELINE_ORDER.indexOf(oldStatus);
+      let reason = null;
+      if (isBackward) {
+        reason = prompt('Đây là thao tác LÙI trạng thái - chỉ HR Manager/Admin được phép, cần nhập lý do:');
+        if (!reason) { selectEl.value = oldStatus; showToast('Đã hủy - cần lý do để lùi trạng thái.', 'info'); return; }
+      }
+      try {
+        await api(`/applications/${appId}/status`, { method: 'PUT', body: { status: newStatus, reason } });
+        showToast(`${appId} → ${STATUS_LABEL[newStatus]}`, 'success');
+        renderPipelineTab();
+      } catch (err) { selectEl.value = oldStatus; showToast(translateStatusChangeError(err), 'error'); }
+    }
+
+    async function handleTableSourceChange(selectEl, appId) {
+      const sourceBusinessId = selectEl.value;
+      if (!sourceBusinessId) return;
+      try {
+        await api(`/applications/${appId}`, { method: 'PUT', body: { source_business_id: sourceBusinessId } });
+        showToast(`Đã cập nhật nguồn hồ sơ cho ${appId}.`, 'success');
+        renderPipelineTab();
+      } catch (err) { apiErrorToast(err, 'Đổi nguồn hồ sơ thất bại: '); }
+    }
+
+    function fmtSalaryValue(v) {
+      if (v == null) return '-';
+      return new Intl.NumberFormat('vi-VN').format(v) + ' đ';
+    }
+
+    /* ==================================================================
+       CHI TIET UNG VIEN (v2.3 Section 7) - Thong tin ca nhan/Ky nang/Kinh nghiem
+       (tu Candidate) + Lich su ung tuyen day du (moi Application cua Candidate
+       nay, KHONG bi overwrite - moi lan Apply lai la 1 dong rieng), moi dong kem
+       CV (filename/type/ngay upload/Xem-Tai that qua GET /resumes/{id}/download)
+       va nut Xem AI (tai su dung openAIAnalysisModal). Chi HR+ goi duoc (nut nay
+       chi xuat hien tren Candidate Table, Candidate role khong co tab Pipeline).
+       ================================================================== */
+    async function openCandidateDetailModal(candidateBusinessId) {
+      let candidate, apps;
+      try {
+        candidate = await api(`/candidates/${candidateBusinessId}`);
+        apps = await api(`/applications?candidate_business_id=${candidateBusinessId}`);
+      } catch (err) { apiErrorToast(err, 'Không tải được hồ sơ ứng viên: '); return; }
+
+      const historyRows = await Promise.all(apps.map(async (a) => {
+        let resume = null;
+        if (a.has_resume) {
+          try { resume = await api(`/applications/${a.business_id}/resume`); } catch (e) { }
+        }
+        return { app: a, resume };
+      }));
+
+      const historyHtml = historyRows.length
+        ? historyRows.map(({ app: a, resume }) => `
+        <div class="border border-slate-200 rounded-xl p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p class="font-bold text-sm text-slate-700">${escapeHtml(a.job_title)} <span class="text-slate-400 font-normal">(${escapeHtml(a.job_business_id)})</span></p>
+              <p class="text-[11px] text-slate-400">${a.business_id} · Nộp ngày ${formatDateTime(a.applied_at)}</p>
+            </div>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">${STATUS_LABEL[a.status] || a.status}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs text-slate-600">
+            <p><span class="text-slate-400">Lương mong muốn:</span> ${fmtSalaryValue(a.desired_salary)}</p>
+            <p><span class="text-slate-400">Nguồn hồ sơ:</span> ${escapeHtml(a.source || '-')}</p>
+          </div>
+          <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+            <div class="text-xs text-slate-500">
+              ${resume
+            ? `<i class="fa-solid fa-file-lines mr-1"></i>${escapeHtml(resume.file_name)} (${escapeHtml(resume.file_type)}) · ${formatDateTime(resume.uploaded_at)}`
+            : (a.resume_text ? '<i class="fa-solid fa-file-lines mr-1"></i>CV dạng văn bản dán trực tiếp (không có file)' : '<span class="text-slate-400">Chưa có CV.</span>')}
+            </div>
+            <div class="flex items-center gap-3 text-xs font-bold">
+              ${resume ? `<button onclick="handleDownloadResume('${resume.business_id}', '${escapeHtml(resume.file_name).replace(/'/g, "\\'")}')" class="text-indigo-600 hover:underline"><i class="fa-solid fa-download mr-1"></i>Tải CV</button>` : ''}
+              <button onclick="openAIAnalysisModal('${a.business_id}', '${escapeHtml(candidate.full_name).replace(/'/g, "\\'")}')" class="text-indigo-600 hover:underline"><i class="fa-solid fa-brain mr-1"></i>Xem AI</button>
+            </div>
+          </div>
+        </div>`).join('')
+        : `<p class="text-sm text-slate-400 text-center py-4">Chưa có lượt ứng tuyển nào.</p>`;
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Hồ sơ ứng viên - ${escapeHtml(candidate.full_name)}</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">Thông tin cá nhân</h4>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <p><span class="text-slate-400">Họ tên:</span> ${escapeHtml(candidate.full_name)}</p>
+          <p><span class="text-slate-400">Giới tính:</span> ${candidate.gender ? (GENDER_LABEL[candidate.gender] || candidate.gender) : '-'}</p>
+          <p><span class="text-slate-400">Email:</span> ${escapeHtml(candidate.email)}</p>
+          <p><span class="text-slate-400">SĐT:</span> ${escapeHtml(candidate.phone)}</p>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">Kỹ năng / Kinh nghiệm</h4>
+        <div class="space-y-2 text-sm">
+          <p><span class="text-slate-400 block text-xs uppercase font-bold">Tóm tắt kỹ năng</span>${escapeHtml(candidate.skills_summary || '-')}</p>
+          <p><span class="text-slate-400 block text-xs uppercase font-bold">Tóm tắt kinh nghiệm</span>${escapeHtml(candidate.experience_summary || '-')}</p>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">Lịch sử ứng tuyển (${historyRows.length})</h4>
+        <div class="space-y-3">${historyHtml}</div>
+      </div>
+    </div>`, 'max-w-2xl');
+    }
+
+    async function handleDownloadResume(resumeBusinessId, fileName) {
+      try {
+        await apiDownloadFile(`/resumes/${resumeBusinessId}/download`, fileName);
+      } catch (err) { apiErrorToast(err, 'Tải CV thất bại: '); }
+    }
+
+    /* ==================================================================
+       SUA UNG VIEN tu Candidate Table (v2.3 Section 5) - form rieng voi
+       Save/Cancel + canh bao thay doi chua luu, khac voi openHrApplicationDetail
+       (chi de XEM chi tiet/doi trang thai/offer). Ho ten/Gioi tinh/SDT/Ky nang/
+       Kinh nghiem -> PUT /candidates/{id}; Luong mong muon/Nguon ho so ->
+       PUT /applications/{id}. Vi tri ung tuyen la READONLY (khong duoc pha vo
+       relationship Application<->Job qua form sua don gian - da ghi ro trong
+       ApplicationUpdateRequest).
+       ================================================================== */
+    let candidateEditDirty = false;
+
+    async function openCandidateEditModal(appBusinessId) {
+      const app = await api(`/applications/${appBusinessId}`);
+      if (!state.cache.sources) {
+        try { state.cache.sources = await api('/candidate-sources'); } catch (e) { state.cache.sources = []; }
+      }
+      const activeSources = (state.cache.sources || []).filter(s => s.status === 'ACTIVE');
+      const sourceOptions = activeSources.some(s => s.business_id === app.source_business_id)
+        ? activeSources
+        : (app.source_business_id ? [{ business_id: app.source_business_id, name: app.source || app.source_business_id }, ...activeSources] : activeSources);
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa ứng viên - ${escapeHtml(app.candidate_full_name)}</h3>
+      <button onclick="handleCandidateEditClose()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleSaveCandidateEdit(event, '${app.business_id}', '${app.candidate_business_id}')" oninput="candidateEditDirty = true" onchange="candidateEditDirty = true" class="p-6 space-y-3 max-h-[75vh] overflow-y-auto">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ tên *</label>
+          <input id="ce-fullname" required value="${escapeHtml(app.candidate_full_name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Giới tính</label>
+          <select id="ce-gender" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            <option value="">- Không chọn -</option>
+            <option value="MALE" ${app.candidate_gender === 'MALE' ? 'selected' : ''}>Nam</option>
+            <option value="FEMALE" ${app.candidate_gender === 'FEMALE' ? 'selected' : ''}>Nữ</option>
+            <option value="OTHER" ${app.candidate_gender === 'OTHER' ? 'selected' : ''}>Khác</option>
+          </select></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại</label>
+          <input id="ce-phone" value="${escapeHtml(app.candidate_phone)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email</label>
+          <input value="${escapeHtml(app.candidate_email)}" disabled class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-400"></div>
+        <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Vị trí ứng tuyển</label>
+          <input value="${escapeHtml(app.job_title)} (${escapeHtml(app.job_business_id)})" disabled class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-400"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương mong muốn</label>
+          <input id="ce-salary" type="number" min="0" step="100000" value="${app.desired_salary ?? ''}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nguồn hồ sơ</label>
+          <select id="ce-source" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            <option value="">- Chưa chọn -</option>
+            ${sourceOptions.map(s => `<option value="${s.business_id}" ${s.business_id === app.source_business_id ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
+          </select></div>
+        <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tóm tắt kỹ năng</label>
+          <textarea id="ce-skills" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(app.candidate_skills_summary || '')}</textarea></div>
+        <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tóm tắt kinh nghiệm</label>
+          <textarea id="ce-experience" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(app.candidate_experience_summary || '')}</textarea></div>
+      </div>
+      <div class="pt-2 flex justify-end gap-3 sticky bottom-0 bg-white">
+        <button type="button" onclick="handleCandidateEditClose()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`, 'max-w-xl');
+      candidateEditDirty = false;
+    }
+
+    function handleCandidateEditClose() { closeModal(); }
+
+    async function handleSaveCandidateEdit(event, appBusinessId, candidateBusinessId) {
+      event.preventDefault();
+      try {
+        await api(`/candidates/${candidateBusinessId}`, {
+          method: 'PUT',
+          body: {
+            full_name: val('ce-fullname'),
+            gender: val('ce-gender') || null,
+            phone: val('ce-phone') || null,
+            skills_summary: val('ce-skills') || null,
+            experience_summary: val('ce-experience') || null,
+          },
+        });
+        const appPayload = {};
+        if (val('ce-salary') !== '') appPayload.desired_salary = Number(val('ce-salary'));
+        if (val('ce-source')) appPayload.source_business_id = val('ce-source');
+        if (Object.keys(appPayload).length) {
+          await api(`/applications/${appBusinessId}`, { method: 'PUT', body: appPayload });
+        }
+        candidateEditDirty = false;
+        showToast('Lưu thông tin thành công.', 'success');
+        closeModal();
+        renderPipelineTab();
+      } catch (err) { apiErrorToast(err, 'Lưu thất bại: '); }
+    }
+
+    async function handleArchiveApplicationFromTable(appBusinessId) {
+      if (!confirm(`Lưu trữ hồ sơ ${appBusinessId}? Hồ sơ đã HIRED không thể lưu trữ.`)) return;
+      const reason = prompt('Lý do lưu trữ: nhập "REJECTED_ARCHIVE" (từ chối) hoặc "TALENT_POOL" (giữ lại nguồn ứng viên):', 'TALENT_POOL');
+      if (!reason) return;
+      try {
+        await api(`/applications/${appBusinessId}/archive`, { method: 'PUT', body: { archive_reason: reason } });
+        showToast(`Đã lưu trữ ${appBusinessId}.`, 'success');
+        renderPipelineTab();
+      } catch (err) { apiErrorToast(err, 'Lưu trữ thất bại: '); }
+    }
+
+    /* ==================================================================
+       THEM UNG VIEN (v2.2 Section 1-6) - HR/HR_MANAGER/ADMIN
+       ================================================================== */
+    async function openCreateCandidateModal() {
+      const allJobs = state.cache.jobs.length ? state.cache.jobs : await api('/jobs');
+      state.cache.jobs = allJobs;
+      const publishedJobs = allJobs.filter(j => j.status === 'PUBLISHED');
+      if (!state.cache.departments || !state.cache.departments.length) {
+        try { state.cache.departments = await api('/departments'); } catch (e) { }
+      }
+      let sources = [];
+      try { sources = (await api('/candidate-sources')).filter(s => s.status === 'ACTIVE'); } catch (e) { }
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Thêm ứng viên</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateCandidate(event)" class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">Thông tin cá nhân</h4>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ tên *</label>
+            <input id="cc-fullname" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+          <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Giới tính</label>
+            <select id="cc-gender" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+              <option value="">- Không chọn -</option><option value="MALE">Nam</option><option value="FEMALE">Nữ</option><option value="OTHER">Khác</option>
+            </select></div>
+          <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại *</label>
+            <input id="cc-phone" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+          <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email *</label>
+            <input id="cc-email" type="email" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">Thông tin tuyển dụng</h4>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Vị trí ứng tuyển *</label>
+            <select id="cc-job" required onchange="updateCandidateJobDepartment(this)" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+              <option value="">- Chọn vị trí đang tuyển -</option>
+              ${publishedJobs.map(j => `<option value="${j.business_id}" data-dept="${j.department_business_id}">${escapeHtml(j.title)} (${j.business_id})</option>`).join('')}
+            </select>
+            ${!publishedJobs.length ? '<p class="text-[11px] text-amber-600 mt-1">Chưa có tin tuyển dụng nào đang đăng (PUBLISHED).</p>' : ''}
+          </div>
+          <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Phòng ban</label>
+            <input id="cc-department-display" readonly disabled placeholder="Tự động theo vị trí" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-500"></div>
+          <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương mong muốn</label>
+            <input id="cc-salary" type="number" min="0" step="100000" placeholder="VNĐ" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+          <div class="col-span-2"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nguồn hồ sơ</label>
+            <select id="cc-source" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+              <option value="">- Không chọn -</option>
+              ${sources.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('')}
+              <option value="Other">Khác</option>
+            </select></div>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">CV</h4>
+        <input type="file" id="cc-cv-file" accept=".pdf,.docx" class="w-full p-2 border border-slate-200 rounded-xl text-xs bg-slate-50">
+        <p id="cc-cv-filename" class="text-[11px] text-slate-400 mt-1"></p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase text-indigo-600 mb-2">Kỹ năng / kinh nghiệm</h4>
+        <div class="space-y-3">
+          <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tóm tắt kỹ năng</label>
+            <textarea id="cc-skills" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+          <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tóm tắt kinh nghiệm</label>
+            <textarea id="cc-experience" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end gap-3 sticky bottom-0 bg-white">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`, 'max-w-2xl');
+
+      document.getElementById('cc-cv-file').addEventListener('change', function () {
+        document.getElementById('cc-cv-filename').textContent = this.files.length ? `Đã chọn: ${this.files[0].name}` : '';
+      });
+    }
+
+    function updateCandidateJobDepartment(selectEl) {
+      const opt = selectEl.options[selectEl.selectedIndex];
+      const deptId = opt ? opt.dataset.dept : '';
+      const dept = (state.cache.departments || []).find(d => d.business_id === deptId);
+      document.getElementById('cc-department-display').value = dept ? dept.name : '';
+    }
+
+    async function handleCreateCandidate(event) {
+      event.preventDefault();
+      const payload = {
+        full_name: val('cc-fullname'),
+        gender: val('cc-gender') || null,
+        email: val('cc-email'),
+        phone: val('cc-phone'),
+        job_business_id: val('cc-job'),
+        desired_salary: val('cc-salary') ? Number(val('cc-salary')) : null,
+        source: val('cc-source') || null,
+        skills_summary: val('cc-skills') || null,
+        experience_summary: val('cc-experience') || null,
+      };
+      const fileInput = document.getElementById('cc-cv-file');
+      const cvFile = fileInput && fileInput.files.length ? fileInput.files[0] : null;
+
+      try {
+        const result = await api('/candidates', { method: 'POST', body: payload });
+        if (cvFile && result.application_business_id) {
+          try {
+            await apiUploadFile(`/applications/${result.application_business_id}/resume`, cvFile);
+          } catch (uploadErr) {
+            apiErrorToast(uploadErr, 'Đã thêm ứng viên nhưng upload CV thất bại: ');
+          }
+        }
+        closeModal();
+        showToast(`Đã thêm ứng viên ${result.business_id}.`, 'success');
+        renderPipelineTab();
+      } catch (err) { apiErrorToast(err, 'Thêm ứng viên thất bại: '); }
+    }
+
+    async function renderPipelineTab() {
+      const jobs = state.cache.jobs.length ? state.cache.jobs : await api('/jobs');
+      state.cache.jobs = jobs;
+      if (!state.cache.sources) {
+        try { state.cache.sources = await api('/candidate-sources'); } catch (e) { state.cache.sources = []; }
+      }
+
+      const params = new URLSearchParams();
+      if (pipelineFilters.job_business_id) params.set('job_business_id', pipelineFilters.job_business_id);
+      if (pipelineFilters.search) params.set('search', pipelineFilters.search);
+      const apps = await api(`/applications${params.toString() ? '?' + params.toString() : ''}`);
+      state.cache.applications = apps;
+
+      const toggleBtn = (mode, icon, label) => `
+    <button onclick="setPipelineViewMode('${mode}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${pipelineViewMode === mode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}">
+      <i class="fa-solid ${icon} mr-1"></i>${label}
+    </button>`;
+
+      document.getElementById('tab-content').innerHTML = `
+    <div class="animate-fade-in space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+          <input id="pipeline-search" type="text" value="${escapeHtml(pipelineFilters.search)}" placeholder="Tìm theo tên, email, SĐT ứng viên..."
+                 class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" onkeydown="if(event.key==='Enter') applyPipelineFilters()">
+        </div>
+        <select id="pipeline-job-filter" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm min-w-[220px]">
+          <option value="">Tất cả vị trí</option>
+          ${jobs.map(j => `<option value="${j.business_id}" ${pipelineFilters.job_business_id === j.business_id ? 'selected' : ''}>${escapeHtml(j.title)}</option>`).join('')}
+        </select>
+        <button onclick="applyPipelineFilters()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold">Lọc</button>
+        ${pipelineFilters.job_business_id || pipelineFilters.search ? `<button onclick="clearPipelineFilters()" class="border border-slate-200 hover:bg-slate-50 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold">Xóa lọc</button>` : ''}
+        <div class="flex bg-slate-100 rounded-xl p-1 shrink-0">
+          ${toggleBtn('kanban', 'fa-table-columns', 'Kanban')}
+          ${toggleBtn('table', 'fa-table-list', 'Bảng')}
+        </div>
+      </div>
+      ${pipelineViewMode === 'kanban'
+          ? `<div class="flex gap-4 overflow-x-auto pb-4">${renderKanbanColumns(apps)}</div>
+           <p class="text-[11px] text-slate-400">Kéo / thả để thay đổi trạng thái. Thao tác không hợp lệ sẽ bị từ chối.</p>`
+          : renderCandidateTable(apps)}
+    </div>`;
+    }
+
+    function applyPipelineFilters() {
+      pipelineFilters.search = val('pipeline-search');
+      pipelineFilters.job_business_id = val('pipeline-job-filter');
+      renderPipelineTab();
+    }
+
+    function clearPipelineFilters() {
+      pipelineFilters = { job_business_id: '', search: '' };
+      renderPipelineTab();
+    }
+
+    let draggedApp = null;
+
+    // Dich cac ma loi tu application_service.update_status() sang tieng Viet ro
+    // rang cho nguoi dung cuoi (truoc day hien thang ma loi thô nhu
+    // "INVALID_STATUS_TRANSITION: NEW -> HIRED" - khong ai ngoai dev doc hieu duoc).
+    function translateStatusChangeError(err) {
+      const msg = err.message || '';
+      if (msg.startsWith('INVALID_STATUS_TRANSITION')) {
+        const m = msg.match(/INVALID_STATUS_TRANSITION:\s*(\w+)\s*->\s*(\w+)/);
+        const from = m ? (STATUS_LABEL[m[1]] || m[1]) : '';
+        const to = m ? (STATUS_LABEL[m[2]] || m[2]) : '';
+        return `Không thể chuyển từ "${from}" sang "${to}" - thao tác không hợp lệ theo quy trình tuyển dụng.`;
+      }
+      if (msg === 'ONLY_HR_MANAGER_OR_ADMIN_CAN_REVERT') return 'Chỉ HR Manager/Admin mới được lùi giai đoạn.';
+      if (msg === 'REASON_REQUIRED_FOR_REVERT') return 'Cần nhập lý do khi lùi giai đoạn.';
+      if (msg === 'INSUFFICIENT_PERMISSION') return 'Bạn không có quyền thực hiện thao tác này.';
+      return msg || 'Đã có lỗi xảy ra.';
+    }
+
+    function translateInterviewError(err) {
+      const msg = err.message || '';
+      const map = {
+        START_TIME_MUST_BE_BEFORE_END_TIME: 'Thời gian bắt đầu phải trước thời gian kết thúc.',
+        INTERVIEW_TIME_CONFLICT: 'Trùng lịch phỏng vấn - ứng viên hoặc người phỏng vấn đã có lịch khác trong khoảng thời gian này.',
+        INVALID_INTERVIEW_TYPE: 'Hình thức phỏng vấn không hợp lệ.',
+        INVALID_STATUS: 'Trạng thái không hợp lệ.',
+        INVALID_DATETIME_FORMAT: 'Định dạng ngày giờ không hợp lệ.',
+        INTERVIEW_NOT_FOUND: 'Không tìm thấy lịch phỏng vấn.',
+        APPLICATION_NOT_FOUND: 'Không tìm thấy hồ sơ ứng tuyển.',
+        NOT_YOUR_ASSIGNED_APPLICATION: 'Hồ sơ này không thuộc phạm vi bạn được phân công.',
+        INTERVIEWER_NOT_FOUND: 'Người phỏng vấn không hợp lệ.',
+        ONLY_CANDIDATE_HAS_MY_INTERVIEWS: 'Chức năng này chỉ dành cho ứng viên.',
+        NOT_YOUR_INTERVIEW: 'Đây không phải lịch phỏng vấn của bạn.',
+      };
+      return map[msg] || msg || 'Đã có lỗi xảy ra.';
+    }
+
+    async function handleKanbanDrop(event, newStatus) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+      if (!draggedApp) return;
+      const appId = draggedApp; draggedApp = null;
+
+      const app = state.cache.applications.find(a => a.business_id === appId);
+      if (!app || app.status === newStatus) return;
+
+      const isBackward = PIPELINE_ORDER.includes(app.status) && PIPELINE_ORDER.includes(newStatus)
+        && PIPELINE_ORDER.indexOf(newStatus) < PIPELINE_ORDER.indexOf(app.status);
+
+      let reason = null;
+      if (isBackward) {
+        reason = prompt('Đây là thao tác LÙI trạng thái - chỉ HR Manager/Admin được phép, cần nhập lý do:');
+        if (!reason) { showToast('Đã hủy - cần lý do để lùi trạng thái.', 'info'); return; }
+      }
+
+      try {
+        await api(`/applications/${appId}/status`, { method: 'PUT', body: { status: newStatus, reason } });
+        showToast(`${appId} → ${STATUS_LABEL[newStatus]}`, 'success');
+        renderPipelineTab();
+      } catch (err) { showToast(translateStatusChangeError(err), 'error'); }
+    }
+
+    async function openHrApplicationDetail(appBusinessId) {
+      const app = await api(`/applications/${appBusinessId}`);
+      let offers = [];
+      try { offers = await api(`/offers?application_business_id=${appBusinessId}`); } catch (e) { }
+      const currentOffer = offers[0];
+      let aiHistory = [];
+      try { aiHistory = await api(`/ai/analysis/${appBusinessId}`); } catch (e) { }
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-lg">${escapeHtml(app.candidate_full_name)}</h3>
+        <p class="text-xs text-slate-400">${app.business_id} · ${escapeHtml(app.candidate_email)} · ${escapeHtml(app.candidate_phone)}</p>
+      </div>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <div class="p-6 space-y-5">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-500">Trạng thái:</span>
+          <span class="text-xs font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600">${STATUS_LABEL[app.status]}</span>
+          <span class="text-xs text-slate-400">· Vị trí: <span class="font-semibold text-slate-600">${escapeHtml(app.job_title)}</span></span>
+        </div>
+        <button onclick="openSendEmailModal('${app.business_id}')" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold">
+          <i class="fa-solid fa-paper-plane mr-1 text-indigo-500"></i> Gửi Email
+        </button>
+      </div>
+      ${renderResumeSection(app)}
+      <div id="ai-section">${renderAiSection(app, aiHistory[0])}</div>
+      <div id="offer-section">${renderHrOfferSection(app, currentOffer)}</div>
+      ${renderArchiveSection(app)}
+    </div>`, 'max-w-xl');
+    }
+
+    function renderAiSection(app, latestAnalysis) {
+      const canRun = ['NEW', 'SCREENING'].includes(app.status) || !latestAnalysis;
+      const btn = `<button onclick="runAiAnalyze('${app.business_id}')" id="btn-run-ai" class="text-xs font-bold text-indigo-600 hover:underline"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>${latestAnalysis ? 'Phân tích lại' : 'Chạy AI phân tích'}</button>`;
+
+      if (!latestAnalysis) {
+        return `
+      <div class="border-t border-slate-100 pt-4 flex items-center justify-between">
+        <p class="text-xs text-slate-400">Chưa có kết quả phân tích AI cho hồ sơ này.</p>
+        ${btn}
+      </div>`;
+      }
+
+      // v2.3 Section 6.1: hien thi toan bo field AI da co san trong schema
+      // (truoc chi hien Ky nang khop/thieu/Nhan xet - Strengths/Weaknesses/
+      // Experience Summary da co san o API nhung chua duoc hien thi).
+      return `
+    <div class="border-t border-slate-100 pt-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-sm flex items-center gap-2">
+          <i class="fa-solid fa-brain text-indigo-600"></i> Phân tích AI
+          ${matchScoreBadge(latestAnalysis.match_score)}
+        </h4>
+        ${btn}
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 space-y-2">
+        <p><span class="font-bold">Kỹ năng khớp:</span> ${latestAnalysis.matched_skills.join(', ') || '-'}</p>
+        <p><span class="font-bold">Kỹ năng thiếu:</span> ${latestAnalysis.missing_skills.join(', ') || '-'}</p>
+        <p><span class="font-bold">Điểm mạnh:</span> ${(latestAnalysis.strengths || []).join(', ') || '-'}</p>
+        <p><span class="font-bold">Điểm yếu:</span> ${(latestAnalysis.weaknesses || []).join(', ') || '-'}</p>
+        <p><span class="font-bold">Tóm tắt kinh nghiệm:</span> ${escapeHtml(latestAnalysis.experience_summary || '-')}</p>
+        <p><span class="font-bold">Nhận xét/Đề xuất:</span> ${escapeHtml(latestAnalysis.recommendation)}</p>
+        <p class="text-slate-400">Model: ${escapeHtml(latestAnalysis.provider)}/${escapeHtml(latestAnalysis.model)} · ${formatDateTime(latestAnalysis.created_at)}</p>
+      </div>
+    </div>`;
+    }
+
+    // v2.3 Section 6: "Xem AI" tu Candidate Table - mo Modal rieng (khong nhet
+    // het vao 1 cell), tai su dung renderAiSection() da co san de nhat quan giao
+    // dien voi Application Detail. Candidate KHONG duoc goi ham nay (chi HR+ co
+    // nut "Xem AI" tren Table - da kiem tra o renderCandidateTable).
+    async function openAIAnalysisModal(appBusinessId, candidateName) {
+      let app, aiHistory = [];
+      try {
+        app = await api(`/applications/${appBusinessId}`);
+        aiHistory = await api(`/ai/analysis/${appBusinessId}`);
+      } catch (err) { apiErrorToast(err, 'Không tải được phân tích AI: '); return; }
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Phân tích AI - ${escapeHtml(candidateName)}</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <div class="p-6" id="ai-modal-section">${renderAiSection(app, aiHistory[0])}</div>
+    ${aiHistory.length > 1 ? `
+      <div class="px-6 pb-6">
+        <h4 class="text-xs font-bold uppercase text-slate-500 mb-2">Lịch sử phân tích (${aiHistory.length} lần)</h4>
+        <div class="space-y-1">
+          ${aiHistory.map(h => `<p class="text-[11px] text-slate-400">${h.business_id} · ${matchScoreBadge(h.match_score)} · ${formatDateTime(h.created_at)} ${h.is_latest ? '(mới nhất)' : ''}</p>`).join('')}
+        </div>
+      </div>` : ''}`, 'max-w-lg');
+    }
+
+    async function runAiAnalyze(appBusinessId) {
+      const btn = document.getElementById('btn-run-ai');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang phân tích...'; }
+      try {
+        const result = await api(`/ai/analyze/${appBusinessId}`, { method: 'POST' });
+        if (result && result.needs_manual_review) {
+          showToast('Không có nội dung CV để phân tích - cần sàng lọc thủ công.', 'info');
+        } else {
+          showToast('Đã có kết quả phân tích AI.', 'success');
+        }
+        openHrApplicationDetail(appBusinessId);
+        if (state.activeTab === 'pipeline') renderPipelineTab();
+      } catch (err) { apiErrorToast(err, 'Phân tích AI thất bại: '); }
+    }
+
+    function renderArchiveSection(app) {
+      const me = state.currentUser;
+      if (me.role !== 'HR_MANAGER' && me.role !== 'ADMIN') return '';
+      if (app.status === 'HIRED' || app.status === 'ARCHIVED') return '';
+      return `
+    <div class="border-t border-slate-100 pt-4">
+      <button onclick="archiveApplication('${app.business_id}')" class="w-full border border-slate-200 text-slate-600 hover:bg-slate-50 py-2 rounded-xl text-xs font-bold">
+        <i class="fa-solid fa-box-archive mr-1"></i> Lưu trữ hồ sơ (Archive)
+      </button>
+    </div>`;
+    }
+
+    async function archiveApplication(appBusinessId) {
+      const isTalentPool = confirm('OK = Lưu vào Talent Pool (có thể liên hệ lại sau)\nCancel = Lưu trữ vì bị từ chối (REJECTED_ARCHIVE)');
+      const archive_reason = isTalentPool ? 'TALENT_POOL' : 'REJECTED_ARCHIVE';
+      try {
+        await api(`/applications/${appBusinessId}/archive`, { method: 'PUT', body: { archive_reason } });
+        showToast('Đã lưu trữ hồ sơ.', 'success');
+        closeModal();
+        if (state.activeTab === 'pipeline') renderPipelineTab();
+      } catch (err) { apiErrorToast(err, 'Lưu trữ thất bại: '); }
+    }
+
+    function renderHrOfferSection(app, offer) {
+      const me = state.currentUser;
+      const canApprove = me.role === 'HR_MANAGER' || me.role === 'ADMIN';
+
+      if (!offer) {
+        if (app.status !== 'INTERVIEW') {
+          return `<p class="text-xs text-slate-400 border-t border-slate-100 pt-4">Chỉ có thể tạo Offer khi hồ sơ đang ở trạng thái Phỏng vấn (INTERVIEW).</p>`;
+        }
+        return `
+      <div class="border-t border-slate-100 pt-4">
+        <h4 class="font-bold text-sm mb-3">Tạo Offer mới</h4>
+        <form onsubmit="handleCreateOffer(event, '${app.business_id}')" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Lương chính thức *</label>
+              <input id="offer-salary" type="number" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"></div>
+            <div><label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Lương thử việc *</label>
+              <input id="offer-probation-salary" type="number" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"></div>
+          </div>
+          <div><label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Ngày bắt đầu *</label>
+            <input id="offer-start-date" type="date" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"></div>
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-sm font-bold">Tạo Offer (nháp)</button>
+        </form>
+      </div>`;
+      }
+
+      const isCreator = offer.creator_business_id === me.business_id;
+      let actions = '';
+      if (offer.status === 'DRAFT') {
+        actions = `<button onclick="submitOffer('${offer.business_id}', '${app.business_id}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Gửi yêu cầu duyệt</button>`;
+      } else if (offer.status === 'PENDING_APPROVAL') {
+        if (canApprove && !isCreator) {
+          actions = `
+        <div class="flex gap-2">
+          <button onclick="approveOffer('${offer.business_id}', '${app.business_id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold">Duyệt Offer</button>
+          <button onclick="rejectOffer('${offer.business_id}', '${app.business_id}')" class="flex-1 bg-white border border-rose-200 text-rose-600 py-2 rounded-xl text-xs font-bold">Từ chối</button>
+        </div>`;
+        } else if (canApprove && isCreator) {
+          actions = `<p class="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-xl p-2">Bạn là người tạo Offer này, bạn KHÔNG thể tự duyệt. Cần một HR Manager/Admin khác duyệt.</p>`;
+        } else {
+          actions = `<p class="text-[11px] text-slate-400">Đang chờ HR Manager/Admin duyệt.</p>`;
+        }
+      } else if (offer.status === 'APPROVED') {
+        actions = `<button onclick="sendOffer('${offer.business_id}', '${app.business_id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold">Gửi Offer cho ứng viên</button>`;
+      }
+
+      return `
+    <div class="border-t border-slate-100 pt-4 space-y-3">
+      <h4 class="font-bold text-sm">Thư mời nhận việc - ${escapeHtml(offer.job_title || '')}</h4>
+      <div class="text-xs text-slate-600 bg-slate-50 rounded-xl p-3 space-y-1">
+        <p>Trạng thái: <span class="font-bold">${OFFER_STATUS_LABEL[offer.status]}</span></p>
+        <p>Người tạo: <span class="font-bold">${escapeHtml(offer.creator_name || offer.creator_business_id)}</span>${isCreator ? ' (bạn)' : ''}</p>
+        ${offer.approver_name ? `<p>Người duyệt: <span class="font-bold">${escapeHtml(offer.approver_name)}</span></p>` : ''}
+        <p>Lương: <span class="font-bold">${Number(offer.salary).toLocaleString('vi-VN')} VNĐ</span></p>
+      </div>
+      ${actions}
+    </div>`;
+    }
+
+    async function handleCreateOffer(event, appBusinessId) {
+      event.preventDefault();
+      const payload = {
+        application_business_id: appBusinessId,
+        salary: val('offer-salary'), probation_salary: val('offer-probation-salary'),
+        start_date: val('offer-start-date'),
+      };
+      try {
+        await api('/offers', { method: 'POST', body: payload });
+        showToast('Đã tạo Offer (DRAFT).', 'success');
+        openHrApplicationDetail(appBusinessId);
+      } catch (err) { apiErrorToast(err, 'Tạo Offer thất bại: '); }
+    }
+
+    async function submitOffer(offerId, appId) {
+      try { await api(`/offers/${offerId}/submit`, { method: 'POST' }); showToast('Đã gửi yêu cầu duyệt.', 'success'); openHrApplicationDetail(appId); }
+      catch (err) { apiErrorToast(err, 'Gửi duyệt thất bại: '); }
+    }
+    async function approveOffer(offerId, appId) {
+      try { await api(`/offers/${offerId}/approve`, { method: 'POST' }); showToast('Đã duyệt Offer.', 'success'); openHrApplicationDetail(appId); }
+      catch (err) { apiErrorToast(err, err.status === 409 ? 'Không thể duyệt: bạn chính là người tạo Offer này' : 'Duyệt thất bại: '); }
+    }
+    async function rejectOffer(offerId, appId) {
+      const reason = prompt('Lý do từ chối Offer (bắt buộc):');
+      if (!reason) return;
+      try { await api(`/offers/${offerId}/reject`, { method: 'POST', body: { reason } }); showToast('Đã từ chối, Offer quay về DRAFT.', 'success'); openHrApplicationDetail(appId); }
+      catch (err) { apiErrorToast(err, 'Từ chối thất bại: '); }
+    }
+    async function sendOffer(offerId, appId) {
+      try { await api(`/offers/${offerId}/send`, { method: 'POST' }); showToast('Đã gửi Offer cho ứng viên.', 'success'); openHrApplicationDetail(appId); }
+      catch (err) { apiErrorToast(err, 'Gửi Offer thất bại: '); }
+    }
+
+    /* ==================================================================
+       OFFERS TAB (HR_MANAGER / ADMIN) - danh sach cho duyet toan he thong
+       ================================================================== */
+    async function renderOffersTab() {
+      const offers = await api('/offers?status=PENDING_APPROVAL');
+      const me = state.currentUser;
+      if (!offers.length) {
+        document.getElementById('tab-content').innerHTML = `<p class="text-slate-400 text-sm text-center py-16">Không có Offer nào đang chờ duyệt.</p>`;
+        return;
+      }
+      const rows = offers.map(o => {
+        const isCreator = o.creator_business_id === me.business_id;
+        return `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between gap-4">
+      <div class="min-w-0">
+        <h3 class="font-bold text-slate-800 text-sm">${escapeHtml(o.candidate_full_name)} <span class="text-slate-300">·</span> ${escapeHtml(o.job_title)}</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(o.candidate_email)}${o.department_name ? ' · ' + escapeHtml(o.department_name) : ''}</p>
+        <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500 mt-1.5">
+          <span><i class="fa-solid fa-sack-dollar text-slate-400 mr-1"></i>Lương chính thức: <span class="font-bold text-slate-700">${Number(o.salary).toLocaleString('vi-VN')} VNĐ</span></span>
+          <span><i class="fa-solid fa-hourglass-half text-slate-400 mr-1"></i>Lương thử việc: <span class="font-bold text-slate-700">${Number(o.probation_salary).toLocaleString('vi-VN')} VNĐ</span></span>
+          <span><i class="fa-solid fa-calendar-day text-slate-400 mr-1"></i>Bắt đầu: <span class="font-bold text-slate-700">${formatDate(o.start_date)}</span></span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">Người tạo: ${escapeHtml(o.creator_name || o.creator_business_id)}${isCreator ? ' (bạn)' : ''}</p>
+      </div>
+      ${isCreator
+            ? `<span class="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 shrink-0">Bạn là người tạo - không thể tự duyệt</span>`
+            : `<div class="flex gap-2 shrink-0">
+             <button onclick="approveOffer('${o.business_id}', null).then(()=>renderOffersTab())" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold">Duyệt</button>
+             <button onclick="rejectOffer('${o.business_id}', null).then(()=>renderOffersTab())" class="bg-white border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold">Từ chối</button>
+           </div>`}
+    </div>`;
+      }).join('');
+      document.getElementById('tab-content').innerHTML = `<div class="space-y-4 animate-fade-in">${rows}</div>`;
+    }
+
+    /* ==================================================================
+       SEND EMAIL (thu cong, tu modal chi tiet ho so)
+       ================================================================== */
+    const EMAIL_TYPE_LABEL = {
+      APPLICATION_RECEIVED: 'Đã nhận hồ sơ', SHORTLISTED: 'Được shortlist', INTERVIEW_INVITATION: 'Mời phỏng vấn',
+      INTERVIEW_REMINDER: 'Nhắc lịch phỏng vấn', REJECTION: 'Từ chối', OFFER: 'Gửi Offer', ONBOARDING: 'Chào mừng nhân viên mới',
+    };
+
+    async function openSendEmailModal(appBusinessId) {
+      const templates = (await api('/email-templates')).filter(t => t.status === 'ACTIVE');
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Gửi Email cho ứng viên</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleSendEmail(event, '${appBusinessId}')" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Chọn mẫu Email *</label>
+        <select id="send-email-template" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          ${templates.map(t => `<option value="${t.business_id}">${escapeHtml(t.name)} (${EMAIL_TYPE_LABEL[t.type] || t.type})</option>`).join('') || '<option value="">(chưa có mẫu ACTIVE - vào tab "Mẫu Email" để tạo)</option>'}
+        </select></div>
+      <p class="text-[11px] text-slate-400">Nếu SMTP chưa cấu hình đúng trong <code>.env</code> (SMTP_USER/SMTP_PASSWORD), việc gửi sẽ thất bại thật - lỗi cụ thể được ghi lại vào Audit Log.</p>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Gửi</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleSendEmail(event, appBusinessId) {
+      event.preventDefault();
+      const templateId = val('send-email-template');
+      if (!templateId) return;
+      try {
+        const result = await api(`/email-templates/send/${appBusinessId}`, { method: 'POST', body: { template_business_id: templateId } });
+        closeModal();
+        showToast(result.success ? `Đã gửi email tới ${result.to}.` : `Gửi email thất bại - ${result.status_message}`, result.success ? 'success' : 'error');
+      } catch (err) { apiErrorToast(err, 'Gửi email thất bại: '); }
+    }
+
+    /* ==================================================================
+       EMAIL TEMPLATES TAB
+       ================================================================== */
+    async function renderEmailTemplatesTab() {
+      const templates = await api('/email-templates');
+      const canManage = state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN';
+
+      const rows = templates.map(t => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-2">
+      <div class="flex items-start justify-between">
+        <div>
+          <h4 class="font-bold text-sm text-slate-800">${escapeHtml(t.name)}</h4>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">${EMAIL_TYPE_LABEL[t.type] || t.type}</span>
+        </div>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${t.status}</span>
+      </div>
+      <p class="text-xs text-slate-500 truncate">${escapeHtml(t.subject)}</p>
+      <p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(t.content).slice(0, 120)}...</p>
+      ${canManage ? `
+        <div class="flex gap-2 mt-2">
+          <button onclick='openEditEmailTemplateModal(${JSON.stringify(t)})' class="flex-1 border border-indigo-200 hover:bg-indigo-50 text-indigo-600 py-1.5 rounded-lg text-[11px] font-bold">Sửa</button>
+          ${t.status === 'ACTIVE' ? `<button onclick="deactivateEmailTemplate('${t.business_id}')" class="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-500 py-1.5 rounded-lg text-[11px] font-bold">Vô hiệu hóa</button>` : ''}
+        </div>` : ''}
+    </div>`).join('');
+
+      document.getElementById('tab-content').innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in">
+      ${rows || '<p class="text-slate-400 text-sm col-span-full text-center py-10">Chưa có mẫu Email nào.</p>'}
+    </div>`;
+    }
+
+    function openCreateEmailTemplateModal() {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Tạo mẫu Email</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateEmailTemplate(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên mẫu *</label>
+        <input id="tmpl-name" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Áp dụng khi (giai đoạn) *</label>
+        <select id="tmpl-type" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          ${Object.entries(EMAIL_TYPE_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+        </select>
+        <p class="text-[11px] text-slate-400 mt-1">Mẫu ACTIVE đầu tiên khớp giai đoạn này sẽ tự động gửi khi hồ sơ chuyển trạng thái tương ứng.</p></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tiêu đề Email *</label>
+        <input id="tmpl-subject" required placeholder="VD: Chúc mừng {{candidate_name}}!" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nội dung *</label>
+        <textarea id="tmpl-content" required rows="5" placeholder="Kính gửi {{candidate_name}}, vị trí {{job_title}} tại {{company_name}}..." class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea>
+        <p class="text-[11px] text-slate-400 mt-1">Biến hỗ trợ: <code>{{candidate_name}}</code> <code>{{job_title}}</code> <code>{{company_name}}</code> <code>{{offer_salary}}</code> <code>{{start_date}}</code></p></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Tạo mẫu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleCreateEmailTemplate(event) {
+      event.preventDefault();
+      const payload = { name: val('tmpl-name'), type: val('tmpl-type'), subject: val('tmpl-subject'), content: val('tmpl-content') };
+      try {
+        await api('/email-templates', { method: 'POST', body: payload });
+        closeModal(); showToast('Đã tạo mẫu Email.', 'success');
+        switchTab('email-templates');
+      } catch (err) { apiErrorToast(err, 'Tạo mẫu thất bại: '); }
+    }
+
+    // v2.3 Section 2.1: form Sua cho HR_MANAGER/ADMIN, co Preview truoc khi luu.
+    // Khong cho sua: business_id (Template Code)/type/created_at/created_by -
+    // chi hien thi read-only, khop dung EmailTemplateUpdateRequest phia backend.
+    function openEditEmailTemplateModal(t) {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa mẫu Email</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleUpdateEmailTemplate(event, '${t.business_id}')" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div><span class="block font-bold uppercase text-slate-400 mb-1">Template Code</span><span class="font-mono text-slate-600">${t.business_id}</span></div>
+        <div><span class="block font-bold uppercase text-slate-400 mb-1">Áp dụng khi</span><span class="text-slate-600">${EMAIL_TYPE_LABEL[t.type] || t.type}</span></div>
+      </div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên mẫu *</label>
+        <input id="etmpl-name" required value="${escapeHtml(t.name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tiêu đề Email *</label>
+        <input id="etmpl-subject" required value="${escapeHtml(t.subject)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nội dung *</label>
+        <textarea id="etmpl-content" required rows="6" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(t.content)}</textarea>
+        <p class="text-[11px] text-slate-400 mt-1">Biến hỗ trợ: <code>{{candidate_name}}</code> <code>{{job_title}}</code> <code>{{company_name}}</code> <code>{{offer_salary}}</code> <code>{{start_date}}</code></p></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Trạng thái</label>
+        <select id="etmpl-status" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          <option value="ACTIVE" ${t.status === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
+          <option value="INACTIVE" ${t.status === 'INACTIVE' ? 'selected' : ''}>INACTIVE</option>
+        </select></div>
+      <button type="button" onclick="renderEmailTemplatePreview()" class="w-full border border-indigo-200 hover:bg-indigo-50 text-indigo-600 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-eye mr-1"></i> Xem trước</button>
+      <div id="etmpl-preview" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm space-y-1">
+        <p class="font-bold text-slate-700" id="etmpl-preview-subject"></p>
+        <p class="text-slate-600 whitespace-pre-wrap" id="etmpl-preview-content"></p>
+      </div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`, 'max-w-xl');
+    }
+
+    function renderEmailTemplatePreview() {
+      const sampleVars = {
+        candidate_name: 'Nguyễn Văn A', job_title: 'Senior Backend Developer', company_name: 'Công ty Demo ATS',
+        offer_salary: '25.000.000 VNĐ', start_date: '01/09/2026',
+      };
+      const substitute = (text) => Object.entries(sampleVars).reduce((acc, [k, v]) => acc.split(`{{${k}}}`).join(v), text);
+      document.getElementById('etmpl-preview-subject').textContent = substitute(val('etmpl-subject'));
+      document.getElementById('etmpl-preview-content').textContent = substitute(val('etmpl-content'));
+      document.getElementById('etmpl-preview').classList.remove('hidden');
+    }
+
+    async function handleUpdateEmailTemplate(event, templateId) {
+      event.preventDefault();
+      const payload = { name: val('etmpl-name'), subject: val('etmpl-subject'), content: val('etmpl-content'), status: val('etmpl-status') };
+      try {
+        await api(`/email-templates/${templateId}`, { method: 'PUT', body: payload });
+        closeModal(); showToast('Mẫu email đã được cập nhật.', 'success');
+        switchTab('email-templates');
+      } catch (err) { apiErrorToast(err, 'Cập nhật thất bại: '); }
+    }
+
+    async function deactivateEmailTemplate(templateId) {
+      if (!confirm('Vô hiệu hóa mẫu Email này? (không xóa vĩnh viễn, có thể xem lại lịch sử)')) return;
+      try {
+        await api(`/email-templates/${templateId}/deactivate`, { method: 'POST' });
+        showToast('Đã vô hiệu hóa mẫu.', 'success');
+        switchTab('email-templates');
+      } catch (err) { apiErrorToast(err, 'Thao tác thất bại: '); }
+    }
+
+    /* ==================================================================
+       RECRUITERS TAB (Doi ngu HR - UC-A01/UC-M03)
+       ================================================================== */
+    async function renderRecruitersTab() {
+      const users = await api('/users?role=HR');
+      const cards = users.map(u => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-2">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs text-white">
+          ${(u.full_name || '?').slice(0, 2).toUpperCase()}
+        </div>
+        <div>
+          <h4 class="font-bold text-sm text-slate-800">${escapeHtml(u.full_name)}</h4>
+          <p class="text-[11px] text-slate-400">${escapeHtml(u.email)}</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+        <span class="font-bold px-2 py-0.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${u.status}</span>
+        <span class="text-slate-400">${u.department_business_id || 'Chưa gán phòng ban'}</span>
+      </div>
+      <div class="flex items-center gap-3 pt-2 border-t border-slate-100 text-[11px] font-bold">
+        <button onclick='openEditHrModal(${JSON.stringify(u)})' class="text-indigo-600 hover:underline">Sửa</button>
+        ${u.status === 'ACTIVE'
+          ? `<button onclick="handleDeactivateHr('${u.business_id}')" class="text-rose-600 hover:underline">Xóa</button>`
+          : `<button onclick="handleReactivateHr('${u.business_id}')" class="text-emerald-600 hover:underline">Khôi phục</button>`}
+      </div>
+    </div>`).join('');
+      document.getElementById('tab-content').innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in">
+      ${cards || '<p class="text-slate-400 text-sm col-span-full text-center py-10">Chưa có nhân viên HR nào.</p>'}
+    </div>`;
+    }
+
+    function openEditHrModal(u) {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa: ${escapeHtml(u.full_name)}</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleUpdateHr(event, '${u.business_id}')" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ tên</label>
+        <input id="eh-fullname" value="${escapeHtml(u.full_name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email (không thể sửa)</label>
+        <input value="${escapeHtml(u.email)}" disabled class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-400"></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleUpdateHr(event, businessId) {
+      event.preventDefault();
+      try {
+        await api(`/users/${businessId}`, { method: 'PUT', body: { full_name: val('eh-fullname') } });
+        closeModal();
+        showToast('Đã cập nhật.', 'success');
+        renderRecruitersTab();
+      } catch (err) { apiErrorToast(err, 'Cập nhật thất bại: '); }
+    }
+
+    async function handleDeactivateHr(businessId) {
+      if (!confirm(`Vô hiệu hóa tài khoản ${businessId}? Có thể ảnh hưởng tới các Application/Job đang gán cho người này (vẫn giữ nguyên lịch sử).`)) return;
+      try {
+        await api(`/users/${businessId}`, { method: 'DELETE' });
+        showToast('Đã vô hiệu hóa tài khoản.', 'success');
+        renderRecruitersTab();
+      } catch (err) { apiErrorToast(err, 'Vô hiệu hóa thất bại: '); }
+    }
+
+    async function handleReactivateHr(businessId) {
+      if (!confirm(`Khôi phục tài khoản ${businessId}? Người này sẽ đăng nhập lại được ngay.`)) return;
+      try {
+        await api(`/users/${businessId}`, { method: 'PUT', body: { status: 'ACTIVE' } });
+        showToast('Đã khôi phục tài khoản.', 'success');
+        renderRecruitersTab();
+      } catch (err) { apiErrorToast(err, 'Khôi phục thất bại: '); }
+    }
+
+    function openCreateHrModal() {
+      const depts = state.cache.departments;
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Thêm chuyên viên HR</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateHr(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Họ tên *</label>
+        <input id="hr-fullname" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email *</label>
+        <input id="hr-email" type="email" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại</label>
+        <input id="hr-phone" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Phòng ban</label>
+        <select id="hr-department" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+          <option value="">(chưa gán)</option>
+          ${depts.map(d => `<option value="${d.business_id}">${escapeHtml(d.name)}</option>`).join('')}
+        </select></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mật khẩu tạm thời * (≥8 ký tự, có chữ và số)</label>
+        <input id="hr-password" type="password" required minlength="8" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Tạo tài khoản HR</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleCreateHr(event) {
+      event.preventDefault();
+      const payload = {
+        full_name: val('hr-fullname'), email: val('hr-email'), phone: val('hr-phone') || null,
+        password: val('hr-password'), role: 'HR', department_business_id: val('hr-department') || null,
+      };
+      try {
+        await api('/users', { method: 'POST', body: payload });
+        closeModal(); showToast('Đã tạo tài khoản HR.', 'success');
+        switchTab('recruiters');
+      } catch (err) { apiErrorToast(err, 'Tạo tài khoản HR thất bại: '); }
+    }
+
+    /* ==================================================================
+       DEPARTMENTS TAB
+       ================================================================== */
+    async function renderDepartmentsTab() {
+      const depts = await api('/departments');
+      state.cache.departments = depts;
+      const isAdmin = state.currentUser.role === 'ADMIN' || state.currentUser.role === 'HR_MANAGER';
+      const rows = depts.map(d => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-sitemap"></i></div>
+      <div class="flex-1 min-w-0">
+        <h4 class="font-bold text-sm truncate">${escapeHtml(d.name)}</h4>
+        <p class="text-[11px]"><span class="${d.status === 'ACTIVE' ? 'text-emerald-600' : 'text-slate-400'} font-bold">${d.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}</span></p>
+      </div>
+      <div class="flex items-center gap-2 text-[11px] font-bold shrink-0">
+        <button onclick="openDepartmentMembersModal('${d.business_id}', '${escapeHtml(d.name).replace(/'/g, "\\'")}')" class="text-slate-500 hover:underline">Thành viên</button>
+        ${isAdmin ? `
+          <button onclick='openEditDepartmentModal(${JSON.stringify(d)})' class="text-indigo-600 hover:underline">Sửa</button>
+          ${d.status === 'ACTIVE'
+            ? `<button onclick="handleDeleteDepartment('${d.business_id}')" class="text-rose-600 hover:underline">Xóa</button>`
+            : `<button onclick="handleRestoreDepartment('${d.business_id}')" class="text-emerald-600 hover:underline">Khôi phục</button>`}
+        ` : ''}
+      </div>
+    </div>`).join('');
+      document.getElementById('tab-content').innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">${rows || '<p class="text-slate-400 text-sm">Chưa có phòng ban.</p>'}</div>`;
+    }
+
+    async function openDepartmentMembersModal(deptBusinessId, deptName) {
+      let members = [];
+      let hiredCandidates = [];
+      try {
+        const allUsers = await api('/users');
+        members = allUsers.filter(u => u.department_business_id === deptBusinessId);
+      } catch (err) { apiErrorToast(err, 'Không tải được danh sách thành viên: '); return; }
+      try {
+        hiredCandidates = await api(`/applications?department_business_id=${deptBusinessId}&status_filter=HIRED`);
+      } catch (e) { /* khong chan modal neu rieng phan nay loi */ }
+
+      const ROLE_LABEL = { HR: 'HR', HR_MANAGER: 'HR Manager', ADMIN: 'Admin' };
+      const rows = members.map(u => `
+    <div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-[10px] text-white shrink-0">
+        ${(u.full_name || '?').slice(0, 2).toUpperCase()}
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-sm text-slate-700 truncate">${escapeHtml(u.full_name)}</p>
+        <p class="text-[11px] text-slate-400 truncate">${escapeHtml(u.email)}</p>
+      </div>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 shrink-0">${ROLE_LABEL[u.role] || u.role}</span>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${u.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${u.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}</span>
+    </div>`).join('');
+
+      const hiredRows = hiredCandidates.map(a => `
+    <div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-[10px] text-white shrink-0">
+        ${(a.candidate_full_name || '?').slice(0, 2).toUpperCase()}
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-sm text-slate-700 truncate">${escapeHtml(a.candidate_full_name)}</p>
+        <p class="text-[11px] text-slate-400 truncate">${escapeHtml(a.candidate_email)} · ${escapeHtml(a.job_title)}</p>
+      </div>
+      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 shrink-0">Đã tuyển</span>
+    </div>`).join('');
+
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Thành viên - ${escapeHtml(deptName)}</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <div class="p-6 space-y-5">
+      <div>
+        <h4 class="text-xs font-bold uppercase text-slate-500 mb-2">Nhân sự nội bộ (${members.length})</h4>
+        ${rows || '<p class="text-slate-400 text-sm text-center py-4">Chưa có nhân sự nội bộ nào thuộc phòng ban này.</p>'}
+      </div>
+      <div>
+        <h4 class="text-xs font-bold uppercase text-slate-500 mb-2">Ứng viên đã tuyển (${hiredCandidates.length})</h4>
+        ${hiredRows || '<p class="text-slate-400 text-sm text-center py-4">Chưa có ứng viên nào được tuyển vào phòng ban này.</p>'}
+      </div>
+    </div>`, 'max-w-md');
+    }
+
+    function openEditDepartmentModal(d) {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa phòng ban</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleUpdateDepartment(event, '${d.business_id}')" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên phòng ban *</label>
+        <input id="ed-name" required value="${escapeHtml(d.name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mô tả</label>
+        <textarea id="ed-desc" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(d.description || '')}</textarea></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleUpdateDepartment(event, businessId) {
+      event.preventDefault();
+      const params = new URLSearchParams({ name: val('ed-name'), description: val('ed-desc') || '' });
+      try {
+        await api(`/departments/${businessId}?${params.toString()}`, { method: 'PUT' });
+        closeModal(); showToast('Đã cập nhật phòng ban.', 'success');
+        switchTab('departments');
+      } catch (err) { apiErrorToast(err, 'Cập nhật thất bại: '); }
+    }
+
+    async function handleDeleteDepartment(businessId) {
+      if (!confirm(`Xóa phòng ban ${businessId}? Nếu đang được Job/Application sử dụng, hệ thống sẽ chỉ vô hiệu hóa (không xóa vật lý) để không làm mất dữ liệu.`)) return;
+      try {
+        const result = await api(`/departments/${businessId}`, { method: 'DELETE' });
+        showToast(result.in_use ? 'Phòng ban đang được sử dụng - đã vô hiệu hóa (giữ nguyên dữ liệu liên quan).' : 'Đã xóa phòng ban.', 'success');
+        switchTab('departments');
+      } catch (err) { apiErrorToast(err, 'Xóa thất bại: '); }
+    }
+
+    async function handleRestoreDepartment(businessId) {
+      if (!confirm(`Khôi phục phòng ban ${businessId}?`)) return;
+      try {
+        const params = new URLSearchParams({ status_value: 'ACTIVE' });
+        await api(`/departments/${businessId}?${params.toString()}`, { method: 'PUT' });
+        showToast('Đã khôi phục phòng ban.', 'success');
+        switchTab('departments');
+      } catch (err) { apiErrorToast(err, 'Khôi phục thất bại: '); }
+    }
+
+    function openCreateDepartmentModal() {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Thêm phòng ban</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateDepartment(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên phòng ban *</label>
+        <input id="dept-name" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Mô tả</label>
+        <textarea id="dept-desc" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Tạo</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleCreateDepartment(event) {
+      event.preventDefault();
+      // Luu y: API /departments nhan name/description qua QUERY PARAM, khong phai JSON body
+      const params = new URLSearchParams({ name: val('dept-name'), description: val('dept-desc') || '' });
+      try {
+        await api(`/departments?${params.toString()}`, { method: 'POST' });
+        closeModal(); showToast('Đã tạo phòng ban.', 'success');
+        switchTab('departments');
+      } catch (err) { apiErrorToast(err, 'Tạo phòng ban thất bại: '); }
+    }
+
+    /* ==================================================================
+       CANDIDATE SOURCES (v2.2 Section 17) - System Configuration
+       ================================================================== */
+    async function renderCandidateSourcesTab() {
+      const sources = await api('/candidate-sources');
+      const isAdmin = state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN';
+      const rows = sources.map(s => `
+    <tr class="border-b border-slate-100 text-sm">
+      <td class="py-3 px-4 font-bold text-slate-700">${escapeHtml(s.name)}</td>
+      <td class="py-3 px-4"><span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${s.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}">${s.status}</span></td>
+      <td class="py-3 px-4 text-xs font-bold">
+        ${isAdmin ? `
+          <button onclick='openEditCandidateSourceModal(${JSON.stringify(s)})' class="text-indigo-600 hover:underline mr-3">Sửa</button>
+          ${s.status === 'ACTIVE' ? `<button onclick="handleDeleteCandidateSource('${s.business_id}')" class="text-rose-600 hover:underline">Xóa</button>` : `<button onclick="handleReactivateCandidateSource('${s.business_id}')" class="text-emerald-600 hover:underline">Kích hoạt lại</button>`}
+        ` : '-'}
+      </td>
+    </tr>`).join('');
+      document.getElementById('tab-content').innerHTML = `
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto animate-fade-in">
+      <table class="w-full text-left">
+        <thead class="bg-slate-50 text-[11px] uppercase text-slate-500 font-bold"><tr><th class="py-3 px-4">Tên nguồn</th><th class="py-3 px-4">Trạng thái</th><th class="py-3 px-4">Thao tác</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="3" class="text-center py-10 text-slate-400 text-sm">Chưa có nguồn ứng viên nào.</td></tr>'}</tbody>
+      </table>
+    </div>`;
+    }
+
+    function openCreateCandidateSourceModal() {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Thêm nguồn ứng viên</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateCandidateSource(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên nguồn * (VD: TopCV, LinkedIn, Referral...)</label>
+        <input id="cs-name" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Tạo</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleCreateCandidateSource(event) {
+      event.preventDefault();
+      try {
+        await api('/candidate-sources', { method: 'POST', body: { name: val('cs-name') } });
+        closeModal(); showToast('Đã tạo nguồn ứng viên.', 'success');
+        switchTab('candidate-sources');
+      } catch (err) { apiErrorToast(err, 'Tạo thất bại: '); }
+    }
+
+    function openEditCandidateSourceModal(s) {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa nguồn ứng viên</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleUpdateCandidateSource(event, '${s.business_id}')" class="p-6 space-y-4">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tên nguồn *</label>
+        <input id="ecs-name" required value="${escapeHtml(s.name)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleUpdateCandidateSource(event, businessId) {
+      event.preventDefault();
+      try {
+        await api(`/candidate-sources/${businessId}`, { method: 'PUT', body: { name: val('ecs-name') } });
+        closeModal(); showToast('Đã cập nhật.', 'success');
+        switchTab('candidate-sources');
+      } catch (err) { apiErrorToast(err, 'Cập nhật thất bại: '); }
+    }
+
+    async function handleDeleteCandidateSource(businessId) {
+      if (!confirm(`Vô hiệu hóa nguồn ${businessId}?`)) return;
+      try {
+        await api(`/candidate-sources/${businessId}`, { method: 'DELETE' });
+        showToast('Đã vô hiệu hóa.', 'success');
+        switchTab('candidate-sources');
+      } catch (err) { apiErrorToast(err, 'Thất bại: '); }
+    }
+
+    async function handleReactivateCandidateSource(businessId) {
+      try {
+        await api(`/candidate-sources/${businessId}`, { method: 'PUT', body: { status: 'ACTIVE' } });
+        showToast('Đã kích hoạt lại.', 'success');
+        switchTab('candidate-sources');
+      } catch (err) { apiErrorToast(err, 'Thất bại: '); }
+    }
+
+    /* ==================================================================
+       INTERVIEW CALENDAR (v2.2 Section 26-34)
+       ================================================================== */
+    let interviewViewMode = localStorage.getItem('ats_interview_view') || 'list'; // 'list' | 'month'
+    const INTERVIEW_TYPE_LABEL = { ONSITE: 'Trực tiếp', ONLINE: 'Trực tuyến' };
+    const INTERVIEW_STATUS_LABEL = { SCHEDULED: 'Đã lên lịch', COMPLETED: 'Đã hoàn thành', CANCELLED: 'Đã hủy' };
+
+    function setInterviewViewMode(mode) {
+      interviewViewMode = mode;
+      localStorage.setItem('ats_interview_view', mode);
+      renderInterviewsTab();
+    }
+
+    function renderInterviewListTable(interviews) {
+      if (!interviews.length) return `<div class="bg-white rounded-2xl border border-slate-200 p-16 text-center text-slate-400 text-sm">Chưa có lịch phỏng vấn.</div>`;
+      const rows = interviews.map(iv => {
+        const start = new Date(iv.start_time);
+        return `
+    <tr class="border-b border-slate-100 text-sm ${iv.status === 'CANCELLED' ? 'opacity-50' : ''}">
+      <td class="py-3 px-4"><p class="font-bold text-slate-700">${escapeHtml(iv.candidate_full_name)}</p><p class="text-[11px] text-slate-400">${escapeHtml(iv.candidate_email)}</p></td>
+      <td class="py-3 px-4 text-slate-600">${escapeHtml(iv.job_title)}</td>
+      <td class="py-3 px-4 text-slate-600">${formatDate(start)}</td>
+      <td class="py-3 px-4 text-slate-600">${formatTime(start)}</td>
+      <td class="py-3 px-4 text-slate-500 text-xs">${INTERVIEW_TYPE_LABEL[iv.interview_type] || iv.interview_type}</td>
+      <td class="py-3 px-4 text-slate-600">${escapeHtml(iv.interviewer_name)}</td>
+      <td class="py-3 px-4">
+        <div class="flex items-center gap-3 text-xs font-bold">
+          <button onclick='openEditInterviewModal(${JSON.stringify(iv)})' class="text-indigo-600 hover:underline">Sửa</button>
+          ${iv.status !== 'CANCELLED' ? `<button onclick="handleCancelInterview('${iv.business_id}')" class="text-rose-600 hover:underline">Xóa</button>` : `<span class="text-slate-300">${INTERVIEW_STATUS_LABEL[iv.status]}</span>`}
+        </div>
+      </td>
+    </tr>`;
+      }).join('');
+      return `
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-slate-50 text-[11px] uppercase text-slate-500 font-bold">
+          <tr><th class="py-3 px-4">Ứng viên</th><th class="py-3 px-4">Vị trí</th><th class="py-3 px-4">Ngày</th><th class="py-3 px-4">Giờ</th><th class="py-3 px-4">Hình thức</th><th class="py-3 px-4">Người phỏng vấn</th><th class="py-3 px-4">Thao tác</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+    }
+
+    function renderInterviewMonthGrid(interviews) {
+      const now = new Date();
+      const year = now.getFullYear(), month = now.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const startOffset = firstDay.getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const byDay = {};
+      interviews.forEach(iv => {
+        const d = new Date(iv.start_time);
+        if (d.getFullYear() === year && d.getMonth() === month) {
+          const key = d.getDate();
+          (byDay[key] = byDay[key] || []).push(iv);
+        }
+      });
+      let cells = '';
+      for (let i = 0; i < startOffset; i++) cells += `<div class="border border-slate-100 bg-slate-50 min-h-[90px]"></div>`;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const items = byDay[day] || [];
+        cells += `
+      <div class="border border-slate-100 min-h-[90px] p-1.5 text-xs">
+        <p class="font-bold text-slate-500 mb-1">${day}</p>
+        ${items.slice(0, 3).map(iv => `<div onclick='openEditInterviewModal(${JSON.stringify(iv)})' class="cursor-pointer truncate bg-indigo-50 text-indigo-600 rounded px-1 mb-0.5 font-semibold" title="${escapeHtml(iv.candidate_full_name)}">${new Date(iv.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ${escapeHtml(iv.candidate_full_name)}</div>`).join('')}
+        ${items.length > 3 ? `<p class="text-[10px] text-slate-400">+${items.length - 3} khác</p>` : ''}
+      </div>`;
+      }
+      const weekdays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      return `
+    <div class="bg-white rounded-2xl border border-slate-200 p-3">
+      <p class="text-sm font-bold text-slate-700 mb-2">Tháng ${month + 1}/${year}</p>
+      <div class="grid grid-cols-7 gap-px bg-slate-100 text-center text-[11px] font-bold text-slate-400 mb-px">
+        ${weekdays.map(w => `<div class="bg-white py-1">${w}</div>`).join('')}
+      </div>
+      <div class="grid grid-cols-7 gap-px bg-slate-100">${cells}</div>
+    </div>`;
+    }
+
+    async function renderInterviewsTab() {
+      const interviews = await api('/interviews');
+      const toggleBtn = (mode, icon, label) => `
+    <button onclick="setInterviewViewMode('${mode}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${interviewViewMode === mode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}">
+      <i class="fa-solid ${icon} mr-1"></i>${label}
+    </button>`;
+      document.getElementById('tab-content').innerHTML = `
+    <div class="animate-fade-in space-y-4">
+      <div class="flex justify-end"><div class="flex bg-slate-100 rounded-xl p-1">${toggleBtn('list', 'fa-list', 'Danh sách')}${toggleBtn('month', 'fa-calendar-days', 'Tháng')}</div></div>
+      ${interviewViewMode === 'list' ? renderInterviewListTable(interviews) : renderInterviewMonthGrid(interviews)}
+    </div>`;
+    }
+
+    async function renderMyInterviewsTab() {
+      const interviews = await api('/interviews/me');
+      if (!interviews.length) {
+        document.getElementById('tab-content').innerHTML = `<p class="text-slate-400 text-sm text-center py-16">Bạn chưa có lịch phỏng vấn nào.</p>`;
+        return;
+      }
+      const cards = interviews.map(iv => {
+        const start = new Date(iv.start_time);
+        return `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-2 ${iv.status === 'CANCELLED' ? 'opacity-50' : ''}">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-sm text-slate-800">${escapeHtml(iv.job_title)}</h4>
+        <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">${INTERVIEW_STATUS_LABEL[iv.status]}</span>
+      </div>
+      <p class="text-xs text-slate-500"><i class="fa-solid fa-calendar-day mr-1.5"></i>${formatDate(start)} · ${formatTime(start)}</p>
+      <p class="text-xs text-slate-500"><i class="fa-solid fa-video mr-1.5"></i>${INTERVIEW_TYPE_LABEL[iv.interview_type] || iv.interview_type}</p>
+      ${iv.location ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1.5"></i>${escapeHtml(iv.location)}</p>` : ''}
+      ${iv.meeting_link ? `<p class="text-xs"><a href="${escapeHtml(iv.meeting_link)}" target="_blank" class="text-indigo-600 hover:underline"><i class="fa-solid fa-link mr-1.5"></i>Link phỏng vấn trực tuyến</a></p>` : ''}
+    </div>`;
+      }).join('');
+      document.getElementById('tab-content').innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">${cards}</div>`;
+    }
+
+    async function _searchApplicationsForInterview(query) {
+      if (!query || query.length < 2) return [];
+      try { return await api(`/applications?search=${encodeURIComponent(query)}`); } catch (e) { return []; }
+    }
+
+    async function openCreateInterviewModal() {
+      let interviewers = [];
+      try { interviewers = await api('/users/interviewers'); } catch (e) { apiErrorToast(e, 'Không tải được danh sách người phỏng vấn: '); }
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Thêm lịch phỏng vấn</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleCreateInterview(event)" class="p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tìm ứng viên (theo tên/email) *</label>
+        <input id="iv-app-search" required placeholder="Nhập để tìm hồ sơ ứng tuyển..." oninput="handleInterviewAppSearch(this.value)" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+        <div id="iv-app-results" class="mt-1 space-y-1"></div>
+        <input type="hidden" id="iv-app-id">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Bắt đầu *</label>
+          <input type="datetime-local" id="iv-start" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Kết thúc *</label>
+          <input type="datetime-local" id="iv-end" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hình thức</label>
+          <select id="iv-type" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            <option value="ONLINE">Trực tuyến</option><option value="ONSITE">Trực tiếp</option>
+          </select></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Người phỏng vấn *</label>
+          <select id="iv-interviewer" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            ${interviewers.map(u => `<option value="${u.business_id}">${escapeHtml(u.full_name)} (${u.role})</option>`).join('')}
+          </select></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Địa điểm</label>
+          <input id="iv-location" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Link họp trực tuyến</label>
+          <input id="iv-meeting-link" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      </div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ghi chú</label>
+        <textarea id="iv-notes" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></textarea></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`, 'max-w-xl');
+    }
+
+    let _ivSearchTimer = null;
+    function handleInterviewAppSearch(query) {
+      clearTimeout(_ivSearchTimer);
+      _ivSearchTimer = setTimeout(async () => {
+        const results = await _searchApplicationsForInterview(query);
+        document.getElementById('iv-app-results').innerHTML = results.slice(0, 6).map(a => `
+      <div onclick="selectInterviewApplication('${a.business_id}', '${escapeHtml(a.candidate_full_name)} - ${escapeHtml(a.job_title)}')"
+           class="cursor-pointer text-xs bg-slate-50 hover:bg-indigo-50 rounded-lg px-2 py-1.5">
+        <strong>${escapeHtml(a.candidate_full_name)}</strong> · ${escapeHtml(a.job_title)} · ${a.business_id}
+      </div>`).join('') || '<p class="text-[11px] text-slate-400">Không tìm thấy.</p>';
+      }, 300);
+    }
+
+    function selectInterviewApplication(appId, label) {
+      document.getElementById('iv-app-id').value = appId;
+      document.getElementById('iv-app-search').value = label;
+      document.getElementById('iv-app-results').innerHTML = '';
+    }
+
+    async function handleCreateInterview(event) {
+      event.preventDefault();
+      const appId = val('iv-app-id');
+      if (!appId) { showToast('Vui lòng chọn ứng viên từ danh sách gợi ý.', 'error'); return; }
+      const payload = {
+        application_business_id: appId,
+        start_time: fromDatetimeLocalValue(val('iv-start')), end_time: fromDatetimeLocalValue(val('iv-end')),
+        interview_type: val('iv-type'), location: val('iv-location') || null,
+        meeting_link: val('iv-meeting-link') || null, interviewer_business_id: val('iv-interviewer'),
+        notes: val('iv-notes') || null,
+      };
+      try {
+        await api('/interviews', { method: 'POST', body: payload });
+        closeModal(); showToast('Đã tạo lịch phỏng vấn.', 'success');
+        switchTab('interviews');
+      } catch (err) { showToast(`Tạo lịch phỏng vấn thất bại: ${translateInterviewError(err)}`, 'error'); }
+    }
+
+    function openEditInterviewModal(iv) {
+      renderModal(`
+    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-lg">Sửa lịch phỏng vấn - ${escapeHtml(iv.candidate_full_name)}</h3>
+      <button onclick="closeModal()"><i class="fa-solid fa-xmark text-xl text-slate-400"></i></button>
+    </div>
+    <form onsubmit="handleUpdateInterview(event, '${iv.business_id}')" class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Bắt đầu</label>
+          <input type="datetime-local" id="eiv-start" value="${toDatetimeLocalValue(iv.start_time)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Kết thúc</label>
+          <input type="datetime-local" id="eiv-end" value="${toDatetimeLocalValue(iv.end_time)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Địa điểm</label>
+          <input id="eiv-location" value="${escapeHtml(iv.location || '')}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Link họp</label>
+          <input id="eiv-meeting-link" value="${escapeHtml(iv.meeting_link || '')}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      </div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ghi chú</label>
+        <textarea id="eiv-notes" rows="2" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">${escapeHtml(iv.notes || '')}</textarea></div>
+      <div class="pt-2 flex justify-end gap-3">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Lưu</button>
+      </div>
+    </form>`);
+    }
+
+    async function handleUpdateInterview(event, businessId) {
+      event.preventDefault();
+      const payload = {
+        start_time: fromDatetimeLocalValue(val('eiv-start')), end_time: fromDatetimeLocalValue(val('eiv-end')),
+        location: val('eiv-location'), meeting_link: val('eiv-meeting-link'), notes: val('eiv-notes'),
+      };
+      try {
+        await api(`/interviews/${businessId}`, { method: 'PUT', body: payload });
+        closeModal(); showToast('Đã cập nhật lịch phỏng vấn.', 'success');
+        switchTab('interviews');
+      } catch (err) { showToast(`Cập nhật thất bại: ${translateInterviewError(err)}`, 'error'); }
+    }
+
+    async function handleCancelInterview(businessId) {
+      if (!confirm('Bạn có chắc chắn muốn xóa lịch phỏng vấn này?')) return;
+      try {
+        await api(`/interviews/${businessId}`, { method: 'DELETE' });
+        showToast('Đã hủy lịch phỏng vấn.', 'success');
+        switchTab('interviews');
+      } catch (err) { showToast(`Hủy thất bại: ${translateInterviewError(err)}`, 'error'); }
+    }
+
+    /* ==================================================================
+       AUDIT LOG TAB
+       ================================================================== */
+    // Nhan tieng Viet cho tung action/entity_type ghi trong audit_logs (chuoi tu
+    // do o tang DB - xem app/services/audit_service.py va cac noi goi .log()) -
+    // liet ke day du tat ca gia tri thuc te dang dung trong code, khong bo sot.
+    const AUDIT_ACTION_LABEL = {
+      AI_SCREENING_SKIPPED_NO_CV_TEXT: 'Bỏ qua phân tích AI (chưa có CV)',
+      AI_SCREENING_COMPLETED: 'Hoàn tất phân tích AI',
+      APPLICATION_DUPLICATE_REQUEST: 'Phát hiện nộp hồ sơ trùng lặp',
+      APPLICATION_REAPPLIED: 'Ứng viên nộp lại hồ sơ',
+      APPLICATION_CREATED: 'Tạo hồ sơ ứng tuyển',
+      STATUS_REVERTED: 'Lùi giai đoạn hồ sơ',
+      APPLICATION_STATUS_CHANGED: 'Đổi giai đoạn hồ sơ',
+      APPLICATION_WITHDRAWN: 'Ứng viên rút hồ sơ',
+      APPLICATION_ARCHIVED: 'Lưu trữ hồ sơ ứng tuyển',
+      APPLICATION_UPDATED: 'Cập nhật hồ sơ ứng tuyển',
+      SOURCE_CREATED: 'Tạo nguồn ứng viên',
+      SOURCE_UPDATED: 'Cập nhật nguồn ứng viên',
+      SOURCE_DELETED: 'Vô hiệu hóa nguồn ứng viên',
+      CANDIDATE_CREATED: 'Tạo hồ sơ ứng viên',
+      CANDIDATE_UPDATED: 'Cập nhật hồ sơ ứng viên',
+      CANDIDATE_DELETED: 'Lưu trữ hồ sơ ứng viên',
+      EMAIL_SENT: 'Gửi email thành công',
+      EMAIL_FAILED: 'Gửi email thất bại',
+      DEPARTMENT_CREATED: 'Tạo phòng ban',
+      DEPARTMENT_UPDATED: 'Cập nhật phòng ban',
+      DEPARTMENT_DELETED: 'Vô hiệu hóa phòng ban',
+      INTERVIEW_CREATED: 'Lên lịch phỏng vấn',
+      INTERVIEW_UPDATED: 'Cập nhật lịch phỏng vấn',
+      INTERVIEW_DELETED: 'Hủy lịch phỏng vấn',
+      OFFER_CREATED: 'Tạo Offer',
+      OFFER_SUBMITTED: 'Nộp Offer chờ duyệt',
+      OFFER_SELF_APPROVAL_BLOCKED: 'Chặn tự duyệt Offer',
+      OFFER_APPROVED: 'Duyệt Offer',
+      OFFER_REJECTED: 'Từ chối duyệt Offer',
+      OFFER_SENT: 'Gửi Offer cho ứng viên',
+      OFFER_ACCEPTED: 'Ứng viên chấp nhận Offer',
+      OFFER_DECLINED: 'Ứng viên từ chối Offer',
+      JOB_AUTO_CLOSED_QUOTA_REACHED: 'Tự động đóng tin (đủ chỉ tiêu)',
+      OFFER_EXPIRED: 'Offer hết hạn',
+      EMAIL_TEMPLATE_CREATED: 'Tạo mẫu Email',
+      EMAIL_TEMPLATE_UPDATED: 'Cập nhật mẫu Email',
+      EMAIL_TEMPLATE_DELETED: 'Vô hiệu hóa mẫu Email',
+      PASSWORD_RESET_REQUESTED: 'Yêu cầu đặt lại mật khẩu',
+      PASSWORD_RESET_COMPLETED: 'Đặt lại mật khẩu thành công',
+      RESUME_UPLOADED: 'Tải lên CV',
+      RESUME_REPLACED: 'Thay thế CV',
+      HR_USER_CREATED: 'Tạo tài khoản HR',
+      HR_USER_UPDATED: 'Cập nhật tài khoản HR',
+      HR_USER_DELETED: 'Vô hiệu hóa tài khoản HR',
+    };
+    const AUDIT_ENTITY_LABEL = {
+      department: 'Phòng ban', candidate_source: 'Nguồn ứng viên', user: 'Tài khoản',
+      email_template: 'Mẫu Email', resume: 'CV', candidate: 'Ứng viên', interview: 'Phỏng vấn',
+      application: 'Hồ sơ ứng tuyển', offer: 'Offer', job: 'Tin tuyển dụng', email: 'Email',
+    };
+
+    async function renderAuditTab() {
+      const logs = await api('/audit-logs');
+      const rows = logs.map(l => `
+    <tr class="border-b border-slate-100 text-xs">
+      <td class="px-4 py-2.5 font-mono text-slate-400 whitespace-nowrap">${formatDateTime(l.created_at)}</td>
+      <td class="px-4 py-2.5 font-bold text-slate-700">${escapeHtml(AUDIT_ACTION_LABEL[l.action] || l.action)}</td>
+      <td class="px-4 py-2.5 text-slate-600">${escapeHtml(l.actor_name)}${l.actor_business_id ? ` <span class="text-slate-300">·</span> <span class="text-slate-400">${l.actor_business_id}</span>` : ''}</td>
+      <td class="px-4 py-2.5 text-slate-600">${escapeHtml(AUDIT_ENTITY_LABEL[l.entity_type] || l.entity_type)} <span class="text-slate-300">·</span> <span class="text-slate-400">${escapeHtml(l.entity_business_id)}</span></td>
+    </tr>`).join('');
+      document.getElementById('tab-content').innerHTML = `
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto animate-fade-in">
+      <table class="w-full text-left">
+        <thead class="bg-slate-50 border-b border-slate-200"><tr>
+          <th class="px-4 py-2.5 text-[11px] font-bold uppercase text-slate-400">Thời gian</th>
+          <th class="px-4 py-2.5 text-[11px] font-bold uppercase text-slate-400">Hành động</th>
+          <th class="px-4 py-2.5 text-[11px] font-bold uppercase text-slate-400">Người thực hiện</th>
+          <th class="px-4 py-2.5 text-[11px] font-bold uppercase text-slate-400">Đối tượng</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 text-xs">Chưa có audit log.</td></tr>'}</tbody>
+      </table>
+    </div>`;
+    }
+
+    /* ==================================================================
+       CSV EXPORT (client-side, tu du lieu applications da tai o tab Pipeline)
+       ================================================================== */
+function csvEscape(v) { return `"${String(v ?? '').replace(/"/g, '""')}"`; }
+
+function downloadCsv(filename, headerLabels, rows) {
+  const lines = headerLabels.length ? [headerLabels.map(csvEscape).join(',')] : [];
+  lines.push(...rows.map(r => r.map(csvEscape).join(',')));
+  const csvContent = lines.join('\r\n');
+  // Fix loi font khi mo bang Excel: ghi BOM tuong minh dang byte (EF BB BF)
+  // + noi dung ma hoa UTF-8 qua TextEncoder, thay vi ghep 1 ky tu BOM vao
+  // chuoi JS roi de trinh duyet tu suy ra encoding luc tao Blob - cach cu
+  // van dung chuan nhung Excel (dac biet ban Windows locale Viet Nam) doi
+  // luc khong nhan dung BOM, doc nham UTF-8 thanh ANSI/Windows-1252 (VD
+  // "Ho ten" hien thanh "Há» tÃªn").
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const contentBytes = new TextEncoder().encode(csvContent);
+  const blob = new Blob([bom, contentBytes], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+    function exportApplicationsToCSV() {
+      const apps = state.cache.applications || [];
+      if (!apps.length) { showToast('Chưa có dữ liệu ứng viên để xuất - mở tab "Ứng viên" trước.', 'info'); return; }
+
+      const headerLabels = [
+        'Họ tên', 'Email', 'Giới tính', 'Vị trí ứng tuyển', 'Mức lương mong muốn (VNĐ)',
+        'Giai đoạn', 'Nguồn hồ sơ', 'Tóm tắt kỹ năng', 'Tóm tắt kinh nghiệm', 'AI Screening',
+      ];
+      const rows = apps.map(a => [
+        a.candidate_full_name || '',
+        a.candidate_email || '',
+        GENDER_LABEL[a.candidate_gender] || '',
+        a.job_title || '',
+        a.desired_salary != null ? a.desired_salary : '',
+        STATUS_LABEL[a.status] || a.status || '',
+        a.source || '',
+        a.candidate_skills_summary || '',
+        a.candidate_experience_summary || '',
+        a.match_score != null ? `${a.match_score}/100` : 'Chưa có kết quả phân tích AI',
+      ]);
+      downloadCsv(`danh-sach-ung-vien-${new Date().toISOString().slice(0, 10)}.csv`, headerLabels, rows);
+      showToast(`Đã xuất ${apps.length} ứng viên ra file Excel.`, 'success');
+    }
+
+    /* ==================================================================
+       UTIL
+       ================================================================== */
+    function val(id) { return document.getElementById(id).value; }
+    function escapeHtml(str) {
+      const div = document.createElement('div'); div.textContent = str ?? ''; return div.innerHTML;
+    }
+
+    // Fix loi lech gio + thieu so 0: backend nay da gui chuoi ISO co hau to
+    // +00:00 (xem app/core/time_utils.py) nen new Date(...) quy doi dung ve
+    // gio dia phuong may nguoi dung, nhung Intl/toLocaleString('vi-VN') KHONG
+    // dam bao zero-pad (VD tra ve "23/8/2026" thay vi "23/08/2026"). Cac ham
+    // duoi day tu pad thu cong de luon dung dinh dang dd/mm/yyyy.
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function formatDate(value) {
+      if (!value) return '';
+      const d = value instanceof Date ? value : new Date(value);
+      if (isNaN(d.getTime())) return '';
+      return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+    function formatTime(value) {
+      if (!value) return '';
+      const d = value instanceof Date ? value : new Date(value);
+      if (isNaN(d.getTime())) return '';
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+    function formatDateTime(value) {
+      if (!value) return '';
+      const d = value instanceof Date ? value : new Date(value);
+      if (isNaN(d.getTime())) return '';
+      return `${formatDate(d)} ${formatTime(d)}`;
+    }
+
+    // BUG FIX: input[type=datetime-local] luon hien thi/nhan gia tri theo GIO
+    // DIA PHUONG cua trinh duyet (khong co timezone trong chuoi, VD
+    // "2026-08-31T20:00"), trong khi backend luu va tra ve moi DateTime theo
+    // UTC (xem app/core/time_utils.py). Truoc day form dat lich phong van gui
+    // thang gia tri dia phuong nay len server va server hieu nham la gio UTC
+    // -> lech dung dung bang chenh lech mui gio (VD nhap 20:00 gio VN, luu
+    // thanh 20:00 UTC = 03:00 gio VN NGAY HOM SAU). 2 ham duoi day quy doi 2
+    // chieu dung dan qua doi tuong Date cua trinh duyet (Date tu dong hieu
+    // chuoi khong timezone la gio dia phuong, va toISOString() luon tra ve
+    // UTC) - dung cho ca luc gui len server lan luc do form Sua.
+    function toDatetimeLocalValue(isoString) {
+      if (!isoString) return '';
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+    function fromDatetimeLocalValue(localValue) {
+      if (!localValue) return null;
+      const d = new Date(localValue);
+      if (isNaN(d.getTime())) return null;
+      return d.toISOString();
+    }
+
+    /* ==================================================================
+       BOOT
+       ================================================================== */
+    setAuthMode('login');
+    bootstrap();
+    // Section 22: link Reset Password trong email tro ve dang
+    // {public_app_url}/reset-password?token=... - tu dong mo modal voi token
+    // dien san neu phat hien tren URL luc tai trang.
+    (function autoOpenResetPasswordFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      if (token && window.location.pathname.includes('reset-password')) {
+        openResetPasswordModal(token);
+      }
+    })();
+    // Preload departments cache cho HR+ ngay sau khi dang nhap (dung khi tao Job)
+    (async function preloadDeptsWhenReady() {
+      const check = setInterval(async () => {
+        if (state.currentUser) {
+          clearInterval(check);
+          if (state.currentUser.role !== 'CANDIDATE') {
+            try { state.cache.departments = await api('/departments'); } catch (e) { }
+          }
+        }
+      }, 300);
+    })();
+  </script>
+</body>
+
+</html>
