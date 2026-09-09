@@ -810,6 +810,7 @@
         ${isCandidate && j.status === 'PUBLISHED' ? `<button onclick="openApplyModal('${j.business_id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold">Ứng tuyển ngay</button>` : ''}
         ${(state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') && j.status !== 'PUBLISHED' && j.status !== 'CLOSED' ? `<button onclick="publishJob('${j.business_id}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Duyệt &amp; Đăng tin</button>` : ''}
         ${(state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') && j.status === 'PUBLISHED' ? `<button onclick="closeJob('${j.business_id}')" class="flex-1 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 py-2 rounded-xl text-xs font-bold">Đóng tin</button>` : ''}
+        ${(state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') && j.status === 'CLOSED' ? `<button onclick="reopenJob('${j.business_id}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Mở lại tin</button>` : ''}
         ${!isCandidate && (state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') ? `<button onclick="assignHrToJob('${j.business_id}')" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 rounded-xl text-xs font-bold">Gán HR</button>` : ''}
         ${!isCandidate && (state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') ? `<button onclick='openEditJobModal(${JSON.stringify(j)})' class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 py-2 rounded-xl text-xs font-bold">Sửa</button>` : ''}
       </div>
@@ -860,6 +861,7 @@
       <div><h4 class="font-bold text-xs uppercase text-slate-500 mb-1">Yêu cầu ứng viên</h4><p class="text-slate-600 whitespace-pre-wrap">${escapeHtml(job.requirements)}</p></div>
       ${isCandidate && job.status === 'PUBLISHED' ? `<button onclick="closeModal(); openApplyModal('${job.business_id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold"><i class="fa-solid fa-paper-plane mr-1"></i> Ứng tuyển ngay</button>` : ''}
       ${(state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') && job.status === 'PUBLISHED' ? `<button onclick="closeJob('${job.business_id}')" class="w-full border border-rose-200 hover:bg-rose-50 text-rose-600 py-2.5 rounded-xl text-sm font-bold"><i class="fa-solid fa-lock mr-1"></i> Đóng tin tuyển dụng</button>` : ''}
+      ${(state.currentUser.role === 'HR_MANAGER' || state.currentUser.role === 'ADMIN') && job.status === 'CLOSED' ? `<button onclick="reopenJob('${job.business_id}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-bold"><i class="fa-solid fa-unlock mr-1"></i> Mở lại tin tuyển dụng</button>` : ''}
     </div>`, 'max-w-2xl');
     }
 
@@ -1038,6 +1040,16 @@
         closeModal();
         switchTab('jobs');
       } catch (err) { apiErrorToast(err, 'Đóng tin thất bại: '); }
+    }
+
+    async function reopenJob(jobId) {
+      if (!confirm(`Mở lại tin tuyển dụng ${jobId}? Ứng viên sẽ nộp hồ sơ mới được trở lại.`)) return;
+      try {
+        await api(`/jobs/${jobId}/publish`, { method: 'POST' });
+        showToast('Đã mở lại tin tuyển dụng.', 'success');
+        closeModal();
+        switchTab('jobs');
+      } catch (err) { apiErrorToast(err, 'Mở lại tin thất bại: '); }
     }
 
     /* ==================================================================
@@ -3058,6 +3070,8 @@
       OFFER_DECLINED: 'Ứng viên từ chối Offer',
       JOB_AUTO_CLOSED_QUOTA_REACHED: 'Tự động đóng tin (đủ chỉ tiêu)',
       JOB_CLOSED_MANUALLY: 'Đóng tin tuyển dụng',
+      JOB_PUBLISHED: 'Duyệt & đăng tin tuyển dụng',
+      JOB_REOPENED: 'Mở lại tin tuyển dụng',
       OFFER_EXPIRED: 'Offer hết hạn',
       EMAIL_TEMPLATE_CREATED: 'Tạo mẫu Email',
       EMAIL_TEMPLATE_UPDATED: 'Cập nhật mẫu Email',

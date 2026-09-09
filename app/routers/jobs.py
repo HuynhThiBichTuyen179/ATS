@@ -119,15 +119,28 @@ def publish_job(
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
     # Don gian hoa: HR Manager/Admin duyet va dang tin trong 1 buoc. Quy trinh
-    # day du DRAFT->PENDING_APPROVAL->APPROVED->PUBLISHED la backlog.
+    # day du DRAFT->PENDING_APPROVAL->APPROVED->PUBLISHED la backlog. Cho phep
+    # ca DRAFT->PUBLISHED (dang tin lan dau) va CLOSED->PUBLISHED (mo lai tin
+    # da dong) - 2 truong hop ghi audit action khac nhau de phan biet.
     job = db.query(Job).filter(Job.business_id == job_business_id).first()
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")
+    if job.status not in (JobStatus.DRAFT, JobStatus.CLOSED):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "JOB_STATUS_NOT_ELIGIBLE_FOR_PUBLISH")
+
     from datetime import datetime, timezone
 
+    is_reopen = job.status == JobStatus.CLOSED
+    before = {"status": job.status.value}
     job.status = JobStatus.PUBLISHED
     job.approved_by = current_user.id
     job.published_at = datetime.now(timezone.utc)
+    db.flush()
+    audit_service.log(
+        db, actor=current_user, action="JOB_REOPENED" if is_reopen else "JOB_PUBLISHED",
+        entity_type="job", entity_business_id=job.business_id,
+        before=before, after={"status": job.status.value},
+    )
     db.commit()
     db.refresh(job)
     return _to_out(db, job)
