@@ -12,8 +12,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def password_must_have_letter_and_digit(cls, value: str) -> str:
-        # v2 Phan 4.4: "toi thieu 8 ky tu, co it nhat 1 chu va 1 so" - truoc ban
-        # vá nay chi check min_length, thieu dieu kien complexity.
+        # "toi thieu 8 ky tu, co it nhat 1 chu va 1 so" 
         if not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value):
             raise ValueError("PASSWORD_MUST_CONTAIN_LETTER_AND_DIGIT")
         return value

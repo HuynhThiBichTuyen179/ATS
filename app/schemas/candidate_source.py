@@ -7,7 +7,7 @@ class CandidateSourceCreateRequest(BaseModel):
 
 class CandidateSourceUpdateRequest(BaseModel):
     name: str | None = None
-    status: str | None = None  # "ACTIVE" | "INACTIVE"
+    status: str | None = None 
 
 
 class CandidateSourceOut(BaseModel):

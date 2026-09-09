@@ -1,6 +1,4 @@
-"""Dashboard summary (cong thuc theo v2 Phan 12.2) va bo loc/tim kiem cho
-GET /jobs, GET /applications - phan hoi cau hoi 'Dashboard dau', 'phai co loc
-tim kiem chu' cua nguoi dung."""
+# Dashboard summary va bo loc/tim kiem cho GET /jobs, GET /applications.
 
 from tests.conftest import auth_headers, register_and_login_candidate
 

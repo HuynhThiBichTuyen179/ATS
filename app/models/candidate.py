@@ -27,13 +27,13 @@ class Candidate(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     full_name = Column(String(100), nullable=False)
-    # v2 changelog #16: email UNIQUE de dedupe candidate (upsert khi trung o service layer)
+    
     email = Column(String(120), unique=True, nullable=False, index=True)
     phone = Column(String(20), nullable=False)
     gender = Column(Enum(Gender), nullable=True)
 
-    # v2.2: ho so ung vien do HR/HR_MANAGER/ADMIN tao truc tiep (khac luong
-    # ung tuyen tu than qua Candidate Portal) - Section 1/37.
+    # ho so ung vien do HR/HR_MANAGER/ADMIN tao truc tiep (khac luong
+    # ung tuyen tu than qua Candidate Portal) 
     skills_summary = Column(Text, nullable=True)
     experience_summary = Column(Text, nullable=True)
     status = Column(Enum(CandidateStatus), nullable=False, default=CandidateStatus.ACTIVE)

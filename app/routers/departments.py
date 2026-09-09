@@ -29,7 +29,7 @@ def create_department(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    # Section 16: Department Name khong duoc duplicate.
+    # Department Name khong duoc duplicate.
     if db.query(Department).filter(Department.name == name).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "DEPARTMENT_NAME_ALREADY_EXISTS")
 
@@ -94,9 +94,9 @@ def delete_department(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    """Section 16: khong xoa 'an toan' Department dang duoc Job/Application su
-    dung - luon soft-delete (status=INACTIVE) thay vi xoa vat ly, tranh vo FK
-    va mat du lieu tham chieu (Section 39 Data Integrity)."""
+    # Khong xoa "an toan" Department dang duoc Job/Application su dung - luon
+    # soft-delete (status=INACTIVE) thay vi xoa vat ly, tranh vo FK va mat du
+    # lieu tham chieu.
     department = db.query(Department).filter(Department.business_id == department_business_id).first()
     if not department:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "DEPARTMENT_NOT_FOUND")

@@ -1,5 +1,5 @@
-"""GET /applications (scope cho Candidate) va GET /offers (list de HR Manager
-tim offer cho duyet) - bo sung khi xay frontend phat hien thieu."""
+# GET /applications (scope cho Candidate) va GET /offers (list de HR Manager
+# tim offer cho duyet).
 
 from app.core.id_generator import generate_business_id
 from app.models.application import Application

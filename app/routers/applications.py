@@ -123,9 +123,8 @@ def apply(
     if not job or job.status != JobStatus.PUBLISHED:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND_OR_NOT_PUBLISHED")
 
-    # v2.3 Section 9.2/21: bat buoc chon Nguon ho so hop le VA dang ACTIVE -
-    # khong tin frontend, backend tu xac thuc lai (Section 9.4: TC-SOURCE-004
-    # nguon INACTIVE khong duoc chon).
+    # Bat buoc chon Nguon ho so hop le VA dang ACTIVE - khong tin frontend,
+    # backend tu xac thuc lai (nguon INACTIVE khong duoc chon).
     candidate_source = (
         db.query(CandidateSource).filter(CandidateSource.business_id == payload.source_business_id).first()
     )
@@ -157,15 +156,14 @@ def list_applications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """HR: chi Job/Application duoc gan. HR Manager/Admin: toan bo. Candidate:
-    chi Application cua chinh minh (phuc vu man hinh 'Ho so ung tuyen cua toi').
-    job_business_id/search phuc vu bo loc + tim kiem tren Kanban.
-    candidate_business_id (v2.3 Section 7.7): phuc vu Candidate Detail -
-    "Application History" (toan bo Application cua 1 Candidate, khong overwrite
-    Application cu) - van ap dung scoping HR/Candidate nhu tren, khong bypass.
-    department_business_id/status_filter: phuc vu "Thanh vien phong ban" -
-    liet ke ung vien da HIRED thuoc 1 phong ban cu the.
-    """
+    # HR: chi Job/Application duoc gan. HR Manager/Admin: toan bo. Candidate:
+    # chi Application cua chinh minh (phuc vu man hinh 'Ho so ung tuyen cua toi').
+    # job_business_id/search phuc vu bo loc + tim kiem tren Kanban.
+    # candidate_business_id: phuc vu Candidate Detail - "Application History"
+    # (toan bo Application cua 1 Candidate, khong overwrite Application cu) -
+    # van ap dung scoping HR/Candidate nhu tren, khong bypass.
+    # department_business_id/status_filter: phuc vu "Thanh vien phong ban" -
+    # liet ke ung vien da HIRED thuoc 1 phong ban cu the.
     query = db.query(Application)
     if current_user.role == UserRole.HR:
         query = query.filter(Application.assigned_hr_id == current_user.id)
@@ -215,8 +213,8 @@ def get_application(
 
 
 def _check_resume_access(current_user: User, application: Application) -> None:
-    # Section 45: Candidate chi xem/upload CV cua chinh minh; HR chi trong
-    # pham vi duoc gan; HR_MANAGER/ADMIN khong gioi han.
+    # Candidate chi xem/upload CV cua chinh minh; HR chi trong pham vi duoc
+    # gan; HR_MANAGER/ADMIN khong gioi han.
     if current_user.role == UserRole.CANDIDATE:
         if application.candidate.user_id != current_user.id:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "NOT_YOUR_APPLICATION")
@@ -238,9 +236,8 @@ async def upload_resume(
     if not application:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "APPLICATION_NOT_FOUND")
 
-    # v2.2 Section 1/5: cho phep ca Candidate (ho so cua chinh minh) lan HR+
-    # (trong pham vi duoc gan) upload CV thay ung vien luc tao ho so tu form
-    # "Them ung vien" - truoc do chi Candidate tu upload duoc.
+    # Cho phep ca Candidate (ho so cua chinh minh) lan HR+ (trong pham vi
+    # duoc gan) upload CV thay ung vien luc tao ho so tu form "Them ung vien".
     _check_resume_access(current_user, application)
 
     resume = await resume_service.upload_resume_file(db, application, file, current_user)
@@ -300,8 +297,8 @@ def update_application(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    """v2.3 Section 5/18 - sua Luong mong muon / Nguon ho so tu Candidate
-    Table. KHONG cho doi Job/Candidate (Section 5: khong pha vo relationship)."""
+    # Sua Luong mong muon / Nguon ho so tu Candidate Table. KHONG cho doi
+    # Job/Candidate (tranh pha vo relationship).
     application = db.query(Application).filter(Application.business_id == application_business_id).first()
     if not application:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "APPLICATION_NOT_FOUND")

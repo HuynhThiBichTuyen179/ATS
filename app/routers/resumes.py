@@ -19,9 +19,9 @@ def download_resume(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Section 36/45: tai file CV that. Uu tien authorization TRUOC khi cho
-    download - Candidate chi tai CV cua chinh minh; HR chi trong pham vi
-    duoc gan; HR_MANAGER/ADMIN khong gioi han."""
+    # Tai file CV that. Uu tien authorization TRUOC khi cho download -
+    # Candidate chi tai CV cua chinh minh; HR chi trong pham vi duoc gan;
+    # HR_MANAGER/ADMIN khong gioi han.
     resume = db.query(Resume).filter(Resume.business_id == resume_business_id).first()
     if not resume:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "RESUME_NOT_FOUND")

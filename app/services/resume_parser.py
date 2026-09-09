@@ -1,16 +1,14 @@
-"""Trich xuat text tu file CV that (PDF/DOCX) - v2 Phan 6 (Resume Parser
-Service), 7.5 (File Storage). Khong co antivirus scan that (ClamAV can dung
-service ngoai, khong the cai dat trong moi truong build nay) - chi validate
-mimetype/extension/magic-bytes + gioi han dung luong nhu mot lop bao ve toi
-thieu, va ghi ro day la GAP con lai trong backlog.
-"""
+# Trich xuat text tu file CV that (PDF/DOCX). Khong co antivirus scan that
+# (ClamAV can dung service ngoai, khong the cai dat trong moi truong build nay)
+# - chi validate mimetype/extension/magic-bytes + gioi han dung luong nhu mot
+# lop bao ve toi thieu, va ghi ro day la GAP con lai trong backlog.
 
 import os
 import uuid
 
 from fastapi import HTTPException, UploadFile, status
 
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10MB, dung theo v2 Phan 14.1
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10MB
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "uploads", "resumes")
 UPLOAD_DIR = os.path.abspath(UPLOAD_DIR)
@@ -18,16 +16,15 @@ UPLOAD_DIR = os.path.abspath(UPLOAD_DIR)
 
 def _validate_magic_bytes(content: bytes, ext: str) -> bool:
     if ext == ".pdf":
-        # ROOT CAUSE (v2.3 Section 1): PDF that tu nhieu cong cu (Word "Save
-        # as PDF", trinh duyet "In ra PDF", scanner, cac dich vu export CV...)
-        # co the chen vai byte thua (BOM UTF-8 \xef\xbb\xbf, dong trong,
-        # whitespace) TRUOC header "%PDF" - van la PDF hop le 100%, mo binh
-        # thuong trong moi PDF reader that. Spec PDF (ISO 32000-1, 7.5.2)
-        # khuyen nghi doc quet header trong 1024 byte dau thay vi bat buoc
-        # dung byte 0 - truoc day code chi check content[:4] == b"%PDF" nen
-        # tu choi nham nhung PDF hop le co leading bytes nay. Quet trong cua
-        # so 1024 byte dau, khop hanh vi PDF reader that (bao gom pypdf dung
-        # de trich xuat text ngay ben duoi).
+        # PDF that tu nhieu cong cu (Word "Save as PDF", trinh duyet "In ra
+        # PDF", scanner, cac dich vu export CV...) co the chen vai byte thua
+        # (BOM UTF-8 \xef\xbb\xbf, dong trong, whitespace) TRUOC header "%PDF"
+        # - van la PDF hop le 100%, mo binh thuong trong moi PDF reader that.
+        # Spec PDF (ISO 32000-1, 7.5.2) khuyen nghi doc quet header trong 1024
+        # byte dau thay vi bat buoc dung byte 0 - chi check content[:4] ==
+        # b"%PDF" se tu choi nham nhung PDF hop le co leading bytes nay. Quet
+        # trong cua so 1024 byte dau, khop hanh vi PDF reader that (bao gom
+        # pypdf dung de trich xuat text ngay ben duoi).
         return b"%PDF" in content[:1024]
     if ext == ".docx":
         # DOCX la file ZIP (Office Open XML) - signature ZIP la "PK"
@@ -54,9 +51,8 @@ def extract_text_from_docx(content: bytes) -> str:
 
 
 async def save_and_extract(file: UploadFile, application_business_id: str) -> tuple[str, str, str, str]:
-    """Validate, luu file that vao uploads/resumes/, tra ve
-    (file_name, file_path, file_type, extracted_text).
-    """
+    # Validate, luu file that vao uploads/resumes/, tra ve
+    # (file_name, file_path, file_type, extracted_text).
     original_name = file.filename or "resume"
     ext = os.path.splitext(original_name)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -71,7 +67,7 @@ async def save_and_extract(file: UploadFile, application_business_id: str) -> tu
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "FILE_CONTENT_DOES_NOT_MATCH_EXTENSION")
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    # v2 Phan 7.5: {application_id}_{uuid4}.{ext} - tranh trung/path traversal
+    # {application_id}_{uuid4}.{ext} - tranh trung/path traversal
     stored_name = f"{application_business_id}_{uuid.uuid4().hex}{ext}"
     file_path = os.path.join(UPLOAD_DIR, stored_name)
     with open(file_path, "wb") as f:

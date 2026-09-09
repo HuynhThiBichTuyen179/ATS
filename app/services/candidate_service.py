@@ -1,8 +1,7 @@
-"""v2.2 Section 1/2/3 - HR/HR_MANAGER/ADMIN tao ho so ung vien truc tiep
-(khac luong tu-ung-tuyen qua Candidate Portal da co san o application_service).
-Tao dong thoi Candidate + Application, Job la COMBOBOX lien ket bang ID (khong
-luu ten tu do), Department luon ke thua tu Job (khong cho override).
-"""
+# HR/HR_MANAGER/ADMIN tao ho so ung vien truc tiep (khac luong tu-ung-tuyen
+# qua Candidate Portal da co san o application_service). Tao dong thoi
+# Candidate + Application, Job la COMBOBOX lien ket bang ID (khong luu ten tu
+# do), Department luon ke thua tu Job (khong cho override).
 
 from decimal import Decimal
 
@@ -24,8 +23,8 @@ def _get_or_create_candidate(
     db: Session, full_name: str, email: str, phone: str, gender: str | None,
     skills_summary: str | None, experience_summary: str | None,
 ) -> tuple[Candidate, bool]:
-    # v2 changelog #16 (da co san o application_service) - ap dung lai dung
-    # nguyen tac dedupe theo email de KHONG tao Candidate trung (APP-19).
+    # Da co san o application_service - ap dung lai dung nguyen tac dedupe
+    # theo email de KHONG tao Candidate trung.
     candidate = db.query(Candidate).filter(Candidate.email == email).first()
     if candidate:
         return candidate, False
@@ -68,7 +67,7 @@ def create_candidate_with_application(
     job = db.query(Job).filter(Job.business_id == job_business_id).first()
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")
-    # Section 2: chi cho chon Job hop le theo business rule hien tai (da dang -
+    # Chi cho chon Job hop le theo business rule hien tai (da dang -
     # PUBLISHED). Khong cho tao Application vao Job DRAFT/CLOSED.
     if job.status != JobStatus.PUBLISHED:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "JOB_NOT_PUBLISHED")
@@ -84,13 +83,13 @@ def create_candidate_with_application(
         if experience_summary:
             candidate.experience_summary = experience_summary
 
-    # v2.3 Section 9.4: neu ten source khop 1 CandidateSource da cau hinh, gan
-    # ca source_id (FK "song"). Form HR van cho phep nhap tu do ("Other"/ten
-    # khac chua co trong danh muc) nen khong bat buoc phai khop (khac voi luong
-    # Candidate tu ung tuyen o application_service.apply_for_job - noi source
+    # Neu ten source khop 1 CandidateSource da cau hinh, gan ca source_id (FK
+    # "song"). Form HR van cho phep nhap tu do ("Other"/ten khac chua co trong
+    # danh muc) nen khong bat buoc phai khop (khac voi luong Candidate tu ung
+    # tuyen o application_service.apply_for_job - noi source
     # BAT BUOC phai la 1 CandidateSource hop le).
-    # Fix: so khop khong phan biet hoa/thuong + bo khoang trang thua - truoc day
-    # so khop tuyet doi khien "website"/"Website " (HR go tu do) khong khop voi
+    # So khop khong phan biet hoa/thuong + bo khoang trang thua - neu so khop
+    # tuyet doi thi "website"/"Website " (HR go tu do) se khong khop voi
     # "Website" da cau hinh san, tao ra nguon "mo côi" (source_id=NULL) va lam
     # Dashboard hien thi trung lap nhieu bien the cua cung 1 nguon that.
     candidate_source = (
@@ -103,7 +102,7 @@ def create_candidate_with_application(
         business_id=generate_business_id(db, "application"),
         candidate_id=candidate.id,
         job_id=job.id,
-        # Section 3: Job Department = Application Department, luon ke thua.
+        # Job Department = Application Department, luon ke thua.
         department_id=job.department_id,
         desired_salary=Decimal(str(desired_salary)) if desired_salary is not None else None,
         source_id=candidate_source.id if candidate_source else None,
@@ -161,9 +160,8 @@ def update_candidate(
 
 
 def archive_candidate(db: Session, actor: User, candidate: Candidate) -> Candidate:
-    """Section 10: uu tien Soft Delete/Archive - khong bao gio xoa vat ly
-    Candidate (se keo theo mat Resume/Application/Interview/AI/Audit lien
-    quan qua FK)."""
+    # Uu tien Soft Delete/Archive - khong bao gio xoa vat ly Candidate (se
+    # keo theo mat Resume/Application/Interview/AI/Audit lien quan qua FK).
     before = {"status": candidate.status.value}
     candidate.status = CandidateStatus.ARCHIVED
     db.flush()

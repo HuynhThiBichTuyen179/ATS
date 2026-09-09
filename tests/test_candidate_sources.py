@@ -1,4 +1,4 @@
-"""v2.2 Section 17/47 - System Configuration: CRUD Candidate Source."""
+# System Configuration: CRUD Candidate Source.
 
 from tests.conftest import auth_headers
 
@@ -39,11 +39,9 @@ def test_hr_can_view_but_not_manage_sources(client, seed):
 
 
 def test_candidate_can_view_active_sources_but_not_manage(client, seed):
-    """BUG FIX: Candidate PHAI xem duoc danh sach Nguon ho so ACTIVE de chon o
-    form Ung tuyen (bat buoc tu v2.3) - truoc day endpoint nay chan hoan toan
-    CANDIDATE, khien dropdown "Nguon ho so" luon rong du Admin da cau hinh san
-    nguon. Candidate van KHONG duoc quan ly (tao/sua/xoa) va KHONG thay nguon
-    da INACTIVE."""
+    # Candidate PHAI xem duoc danh sach Nguon ho so ACTIVE de chon o form Ung
+    # tuyen. Candidate van KHONG duoc quan ly (tao/sua/xoa) va KHONG thay
+    # nguon da INACTIVE.
     from tests.conftest import register_and_login_candidate
 
     admin_headers = auth_headers(client, seed["admin"]["email"])

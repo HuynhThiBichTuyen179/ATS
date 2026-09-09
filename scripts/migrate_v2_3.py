@@ -1,12 +1,11 @@
-"""Migration thu cong cho ATS v2.3 (tiep noi migrate_v2_2.py - khong co Alembic).
-
-An toan: chi ADD COLUMN, khong DROP/khong mat du lieu. Backfill source_id
-best-effort tu ten source text cu (khong bat buoc khop 100%, du lieu source
-text cu van duoc giu nguyen lam snapshot du co khop duoc FK hay khong).
-
-Chay: python -m scripts.migrate_v2_3
-Idempotent: kiem tra cot da ton tai truoc khi ALTER, chay lai nhieu lan an toan.
-"""
+# Migration thu cong so 2.3 cho ATS (tiep noi migrate_v2_2.py - khong co Alembic).
+#
+# An toan: chi ADD COLUMN, khong DROP/khong mat du lieu. Backfill source_id
+# best-effort tu ten source text cu (khong bat buoc khop 100%, du lieu source
+# text cu van duoc giu nguyen lam snapshot du co khop duoc FK hay khong).
+#
+# Chay: python -m scripts.migrate_v2_3
+# Idempotent: kiem tra cot da ton tai truoc khi ALTER, chay lai nhieu lan an toan.
 
 from sqlalchemy import inspect, text
 
@@ -19,9 +18,9 @@ def _has_column(insp, table: str, column: str) -> bool:
 
 
 def _ensure_index(conn, insp, table: str, column: str) -> None:
-    """Tao index don-cot neu chua co (kiem tra qua insp truoc, khong dung
-    'IF NOT EXISTS' vi MySQL < 8.0.23 khong ho tro cu phap nay cho CREATE INDEX
-    - portable hon giua SQLite/MySQL cu-moi)."""
+    # Tao index don-cot neu chua co (kiem tra qua insp truoc, khong dung
+    # 'IF NOT EXISTS' vi MySQL < 8.0.23 khong ho tro cu phap nay cho CREATE
+    # INDEX - portable hon giua SQLite/MySQL cu-moi).
     existing_cols_indexed = {
         c for idx in insp.get_indexes(table) for c in idx["column_names"]
     }
@@ -44,15 +43,11 @@ def run():
                 conn.execute(text("ALTER TABLE applications ADD COLUMN source_id INTEGER"))
                 print("[MIGRATE v2.3] applications.source_id da them")
             if engine.dialect.name == "mysql":
-                # SQLite khong enforce do dai VARCHAR (TEXT affinity) nen
-                # khong can/khong the ALTER COLUMN kieu nay - chi MySQL can.
+                
                 conn.execute(text("ALTER TABLE applications MODIFY COLUMN source VARCHAR(100)"))
                 print("[MIGRATE v2.3] applications.source (MySQL) da mo rong VARCHAR(50)->VARCHAR(100)")
 
-    # Section 16/17: index tren cac cot loc/join thuong xuyen - phai tao rieng
-    # o day vi Base.metadata.create_all() KHONG them index cho bang/cot da
-    # ton tai tu truoc (chi tao bang/cot con thieu), du model da khai bao
-    # index=True.
+ 
     insp = inspect(engine)  # refresh sau khi co the vua ALTER them cot o tren
     with engine.begin() as conn:
         if "applications" in existing_tables:

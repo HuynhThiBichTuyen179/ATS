@@ -14,7 +14,7 @@ def _utcnow():
 class User(Base):
     __tablename__ = "users"
 
-    # technical_id: PK/FK noi bo, khong expose ra API/URL (xem CHANGE 03 Phan 6)
+    # technical_id: PK/FK noi bo, khong expose ra API/URL
     id = Column(Integer, primary_key=True)
     business_id = Column(String(20), unique=True, nullable=False, index=True)
 

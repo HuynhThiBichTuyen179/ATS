@@ -1,7 +1,6 @@
-"""Email Template CRUD, gui thu cong, va tu dong gui theo giai doan (v2 Phan
-9). email_service.send_raw_email() da duoc conftest.py monkeypatch gia lap
-thanh cong (xem fixture _fake_smtp) - test xac nhan qua audit_logs thay vi
-hop thu that, khong goi SMTP that."""
+# Email Template CRUD, gui thu cong va tu dong gui theo giai doan.
+# send_raw_email() duoc monkeypatch gia lap thanh cong (fixture _fake_smtp
+# trong conftest.py) - test xac nhan qua audit_logs, khong goi SMTP that.
 
 from app.models.application import Application
 from app.models.audit_log import AuditLog
@@ -47,7 +46,7 @@ def test_deactivate_template_is_soft_delete(client, seed):
     assert any(t["business_id"] == template_id and t["status"] == "INACTIVE" for t in resp.json())
 
 
-"""v2.3 Section 2/24 - HR_MANAGER va ADMIN deu duoc sua Email Template (TC-EMAIL-001..007)."""
+# HR_MANAGER va ADMIN deu duoc sua Email Template.
 
 
 def test_hr_manager_can_view_and_edit_template(client, seed):
@@ -192,7 +191,7 @@ def test_status_change_to_shortlisted_triggers_email(client, db, seed):
 
 
 def test_no_template_configured_does_not_break_flow(client, db, seed):
-    """Khong co template ACTIVE cho loai su kien -> khong gui, khong loi."""
+    # Khong co template ACTIVE cho loai su kien -> khong gui, khong loi.
     cand_headers = register_and_login_candidate(client, "uv-email4@example.com")
     resp = client.post(
         "/applications",

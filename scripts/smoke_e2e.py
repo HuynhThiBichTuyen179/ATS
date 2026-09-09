@@ -1,8 +1,7 @@
-"""Kich ban E2E mo phong dung cac loi goi ma frontend (app/static/index.html)
-thuc hien, chay qua HTTP that (khong phai TestClient) de xac nhan hop dong API
-dung nhu JS da viet. Chay: python scripts/smoke_e2e.py (server phai dang chay
-tren localhost:8123).
-"""
+# Kich ban E2E mo phong dung cac loi goi ma frontend (app/static/index.html)
+# thuc hien, chay qua HTTP that (khong phai TestClient) de xac nhan hop dong
+# API dung nhu JS da viet. Chay: python scripts/smoke_e2e.py (server phai
+# dang chay tren localhost:8123).
 
 import sys
 import uuid

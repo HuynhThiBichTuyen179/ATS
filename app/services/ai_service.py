@@ -1,15 +1,14 @@
-"""AI Screening Service - v2 Phan 7/8 (retry, cost cap, is_latest history).
-
-CAP NHAT theo yeu cau nguoi dung: BO HOAN TOAN che do STUB (phan tich gia lap).
-Chi phan tich bang AI Provider that (Gemini/Claude qua AI_API_KEY that trong
-.env) - neu chua cau hinh HOAC goi that bai (het quota, sai key, qua tai...)
-thi bao loi CU THE cho nguoi dung (vi du "Het quota API", "API Key khong hop
-le") thay vi am tham tra ket qua gia. Xem AIAnalysisError/_classify_ai_error.
-
-Them nha cung cap moi: viet 1 ham _call_<provider>(prompt) -> dict | None theo
-dung mau _call_gemini/_call_claude, roi dang ky vao PROVIDER_CALLERS va
-DEFAULT_MODELS ben duoi.
-"""
+# AI Screening Service (retry, cost cap, is_latest history).
+#
+# Khong co che do phan tich gia lap: chi phan tich bang AI Provider that
+# (Gemini/Claude qua AI_API_KEY that trong .env) - neu chua cau hinh HOAC goi
+# that bai (het quota, sai key, qua tai...) thi bao loi CU THE cho nguoi dung
+# (vi du "Het quota API", "API Key khong hop le") thay vi am tham tra ket qua
+# gia. Xem AIAnalysisError/_classify_ai_error.
+#
+# Them nha cung cap moi: viet 1 ham _call_<provider>(prompt) -> dict | None
+# theo dung mau _call_gemini/_call_claude, roi dang ky vao PROVIDER_CALLERS
+# va DEFAULT_MODELS ben duoi.
 
 import json
 import re
@@ -29,10 +28,10 @@ REQUEST_TIMEOUT_SECONDS = 30
 
 
 class AIAnalysisError(Exception):
-    """Loi phan tich AI can bao CU THE cho nguoi dung, khong duoc am tham
-    fallback ve du lieu gia. `status_code` de router quyet dinh HTTP status
-    tra ve (400 = loi cau hinh nguoi dung tu sua duoc; 502 = loi phia
-    provider, thu lai sau)."""
+    # Loi phan tich AI can bao CU THE cho nguoi dung, khong duoc am tham
+    # fallback ve du lieu gia. `status_code` de router quyet dinh HTTP status
+    # tra ve (400 = loi cau hinh nguoi dung tu sua duoc; 502 = loi phia
+    # provider, thu lai sau).
 
     def __init__(self, detail: str, status_code: int = 502):
         self.detail = detail
@@ -58,8 +57,8 @@ def _active_model() -> str:
 
 
 def _build_prompt(job_title: str, job_description: str, job_requirements: str, cv_text: str) -> dict:
-    # v2 Phan 8.3 - Structured Prompt, va 8.6 - CHI gui cv_text + thong tin
-    # job, KHONG gui phone/address/date_of_birth/salary/email day du.
+    # Structured Prompt - CHI gui cv_text + thong tin job, KHONG gui
+    # phone/address/date_of_birth/salary/email day du.
     return {
         "system_instruction": (
             "Ban la Chuyen gia Tuyen dung Senior AI. Nhiem vu cua ban la phan tich CV cua ung vien "
@@ -80,9 +79,8 @@ def _build_prompt(job_title: str, job_description: str, job_requirements: str, c
 
 
 def _prompt_to_text(prompt: dict) -> str:
-    """Ghep prompt co cau truc thanh 1 doan text don - dung chung cho moi
-    provider vi ca Gemini lan Claude deu nhan noi dung dang text/message.
-    """
+    # Ghep prompt co cau truc thanh 1 doan text don - dung chung cho moi
+    # provider vi ca Gemini lan Claude deu nhan noi dung dang text/message.
     return (
         f"{prompt['system_instruction']}\n\n"
         f"Job Title: {prompt['input_data']['job_title']}\n"
@@ -94,9 +92,8 @@ def _prompt_to_text(prompt: dict) -> str:
 
 
 def _extract_json(text: str) -> dict | None:
-    """Cac model AI thuong boc JSON trong ```json ... ``` hoac kem giai thich
-    truoc/sau - boc phan JSON dau tien ra truoc khi parse.
-    """
+    # Cac model AI thuong boc JSON trong ```json ... ``` hoac kem giai thich
+    # truoc/sau - boc phan JSON dau tien ra truoc khi parse.
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
         return None
@@ -116,7 +113,7 @@ _last_provider_error: str | None = None
 
 
 def _call_gemini(prompt: dict) -> dict | None:
-    """Goi that Google Gemini API. Tra ve None neu that bai (de caller retry/fallback)."""
+    # Goi that Google Gemini API. Tra ve None neu that bai (de caller retry/fallback).
     global _last_provider_error
     try:
         import httpx
@@ -142,10 +139,9 @@ def _call_gemini(prompt: dict) -> dict | None:
 
 
 def _call_claude(prompt: dict) -> dict | None:
-    """Goi that Anthropic Claude API (Messages API). Tra ve None neu that bai
-    (de caller retry/fallback). Goi truc tiep qua httpx (khong dung SDK
-    `anthropic`) - dung nguyen tac giam phu thuoc da ap dung cho Gemini.
-    """
+    # Goi that Anthropic Claude API (Messages API). Tra ve None neu that bai
+    # (de caller retry/fallback). Goi truc tiep qua httpx (khong dung SDK
+    # `anthropic`) - dung nguyen tac giam phu thuoc da ap dung cho Gemini.
     global _last_provider_error
     try:
         import httpx
@@ -192,11 +188,11 @@ def _call_ai_provider(prompt: dict) -> dict | None:
 
 
 def _classify_ai_error(raw: str | None) -> str:
-    """Dich loi ky thuat (HTTP status/exception) tu _last_provider_error thanh
-    thong bao tieng Viet CU THE cho nguoi dung - theo yeu cau khong duoc bao
-    chung chung "khong phan hoi duoc" nua. Da xac nhan qua test that voi
-    Gemini: 429 = het quota mien phi (20 request/ngay/model), 503 = qua tai
-    tam thoi - 2 nguyen nhan nay can loi khac han nhau."""
+    # Dich loi ky thuat (HTTP status/exception) tu _last_provider_error thanh
+    # thong bao tieng Viet CU THE cho nguoi dung, khong bao chung chung
+    # "khong phan hoi duoc" nua. Da xac nhan qua test that voi Gemini: 429 =
+    # het quota mien phi (20 request/ngay/model), 503 = qua tai tam thoi - 2
+    # nguyen nhan nay can loi khac han nhau.
     if not raw:
         return "Gọi AI Provider thất bại không rõ nguyên nhân. Vui lòng thử lại sau."
 
@@ -221,18 +217,16 @@ def _classify_ai_error(raw: str | None) -> str:
 
 
 def run_screening(db: Session, application: Application, actor: User) -> AIAnalysis:
-    """v2 Phan 8.5: goi AI, retry toi da 2 lan (3 lan goi tong cong) co delay
-    ngan giua cac lan de vuot qua loi qua tai tam thoi (VD Gemini 503 "high
-    demand" - da xac nhan qua test that: 1 lan 503 nhung lan ke tiep 200 chi
-    sau vai giay).
-
-    KHONG con fallback ve STUB (theo yeu cau nguoi dung: chi phan tich bang
-    AI Provider that). Neu chua cau hinh AI_API_KEY hoac goi that bai sau 3
-    lan thu, raise AIAnalysisError voi thong bao CU THE (het quota/sai key/
-    qua tai...) thay vi tra ve du lieu gia - router se convert thanh HTTP
-    error tuong ung. Truong hop khong co CV text van giu nguyen hanh vi cu
-    (needs_manual_review=True, tra None) vi day khong phai loi AI Provider.
-    """
+    # Goi AI, retry toi da 2 lan (3 lan goi tong cong) co delay ngan giua cac
+    # lan de vuot qua loi qua tai tam thoi (VD Gemini 503 "high demand" - 1
+    # lan 503 nhung lan ke tiep 200 chi sau vai giay).
+    #
+    # Khong co fallback ve du lieu gia: chi phan tich bang AI Provider that.
+    # Neu chua cau hinh AI_API_KEY hoac goi that bai sau 3 lan thu, raise
+    # AIAnalysisError voi thong bao CU THE (het quota/sai key/qua tai...) thay
+    # vi tra ve du lieu gia - router se convert thanh HTTP error tuong ung.
+    # Truong hop khong co CV text van giu nguyen hanh vi cu
+    # (needs_manual_review=True, tra None) vi day khong phai loi AI Provider.
     job = application.job
     resume = application.resume
     cv_text = (resume.extracted_text if resume else "") or ""
@@ -274,8 +268,8 @@ def run_screening(db: Session, application: Application, actor: User) -> AIAnaly
         db.commit()
         raise AIAnalysisError(error_detail, status_code=502)
 
-    # v2 Phan 5.7: is_latest - danh dau cac ban ghi cu la khong con moi nhat
-    # truoc khi insert ban ghi moi, giu lai toan bo lich su (khong xoa).
+    # is_latest - danh dau cac ban ghi cu la khong con moi nhat truoc khi
+    # insert ban ghi moi, giu lai toan bo lich su (khong xoa).
     db.query(AIAnalysis).filter(AIAnalysis.application_id == application.id).update({"is_latest": False})
 
     analysis = AIAnalysis(
@@ -296,8 +290,8 @@ def run_screening(db: Session, application: Application, actor: User) -> AIAnaly
     db.add(analysis)
     db.flush()
 
-    # v2 Phan 3.2: AI_SCREENING -> SCREENING khi AI hoan tat (chi chuyen neu
-    # dang o NEW/AI_SCREENING - khong dam len cac trang thai HR da xu ly tay).
+    # AI_SCREENING -> SCREENING khi AI hoan tat (chi chuyen neu dang o
+    # NEW/AI_SCREENING - khong dam len cac trang thai HR da xu ly tay).
     if application.status in (ApplicationStatus.NEW, ApplicationStatus.AI_SCREENING):
         application.status = ApplicationStatus.SCREENING
     application.needs_manual_review = 0

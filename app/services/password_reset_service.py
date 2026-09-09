@@ -1,6 +1,4 @@
-"""v2.2 Section 22-25 - Forgot/Reset Password. Ap dung cho MOI role (Section
-26: "Forgot Password: Own | Own | Own | Own"), khong chi rieng Candidate.
-"""
+# Forgot/Reset Password - ap dung cho MOI role, khong chi rieng Candidate.
 
 from datetime import datetime, timezone
 
@@ -17,8 +15,8 @@ from app.services import audit_service, email_service
 
 
 def request_password_reset(db: Session, email: str) -> None:
-    """Section 24: KHONG leak account existence - luon xu ly nhu nhau (khong
-    raise loi/tra thong tin khac nhau) du email co ton tai hay khong."""
+    # KHONG leak account existence - luon xu ly nhu nhau (khong raise loi/tra
+    # thong tin khac nhau) du email co ton tai hay khong.
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return
@@ -65,7 +63,7 @@ def reset_password(db: Session, raw_token: str, new_password: str) -> None:
     reset = db.query(PasswordResetToken).filter(PasswordResetToken.token_hash == token_hash).first()
 
     now = datetime.now(timezone.utc)
-    # Section 23: token phai con han VA chua tung duoc dung (one-time use).
+    # Token phai con han VA chua tung duoc dung (one-time use).
     if not reset or reset.used_at is not None or reset.expires_at.replace(tzinfo=timezone.utc) < now:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "INVALID_OR_EXPIRED_RESET_TOKEN")
 
@@ -74,8 +72,8 @@ def reset_password(db: Session, raw_token: str, new_password: str) -> None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "INVALID_OR_EXPIRED_RESET_TOKEN")
 
     user.password_hash = hash_password(new_password)
-    # Section 25: invalidate refresh sessions dang co - buoc dang nhap lai
-    # tren moi thiet bi sau khi doi mat khau.
+    # Invalidate refresh sessions dang co - buoc dang nhap lai tren moi thiet
+    # bi sau khi doi mat khau.
     user.refresh_token_hash = None
     user.refresh_token_expires_at = None
     reset.used_at = now

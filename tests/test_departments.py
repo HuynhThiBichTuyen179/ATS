@@ -1,12 +1,12 @@
-"""v2.2 Section 15/16/47 - Department CRUD day du (PUT/DELETE moi bo sung)."""
+# Department CRUD day du (bao gom PUT/DELETE).
 
 from tests.conftest import auth_headers
 
 
 def test_list_applications_filters_by_department_and_status(client, seed, db):
-    """BUG FIX: modal 'Thanh vien phong ban' can liet ke ung vien da HIRED
-    thuoc 1 phong ban cu the - truoc day GET /applications khong co filter
-    nao theo department_business_id/status_filter ca."""
+    # Modal "Thanh vien phong ban" can liet ke ung vien da HIRED thuoc 1
+    # phong ban cu the qua GET /applications voi filter department_business_id/
+    # status_filter.
     from app.core.id_generator import generate_business_id
     from app.models.application import Application
     from app.models.candidate import Candidate
@@ -73,8 +73,8 @@ def test_duplicate_department_name_blocked(client, seed):
 
 
 def test_delete_department_in_use_soft_deletes_not_hard(client, seed):
-    """Section 16: khong xoa 'an toan' Department dang duoc Job su dung ->
-    van phai la soft-delete (INACTIVE), khong lam vo FK cua Job da co."""
+    # Khong xoa "an toan" Department dang duoc Job su dung -> van phai la
+    # soft-delete (INACTIVE), khong lam vo FK cua Job da co.
     headers = auth_headers(client, seed["admin"]["email"])
     # seed["department_business_id"] dang duoc seed["job_business_id"] su dung.
     resp = client.delete(f"/departments/{seed['department_business_id']}", headers=headers)

@@ -1,5 +1,5 @@
-"""PUT /jobs/{id} - sua tin tuyen dung du dang DRAFT hay da PUBLISHED (theo
-yeu cau nguoi dung), va truong deadline luc tao."""
+# PUT /jobs/{id} - sua tin tuyen dung du dang DRAFT hay da PUBLISHED, va
+# truong deadline luc tao.
 
 from tests.conftest import auth_headers
 
@@ -61,4 +61,55 @@ def test_hr_cannot_update_job(client, seed):
     job = _create_job(client, hrm_headers, seed).json()
     hr_headers = auth_headers(client, seed["hr"]["email"])
     resp = client.put(f"/jobs/{job['business_id']}", json={"title": "x"}, headers=hr_headers)
+    assert resp.status_code == 403
+
+
+def test_hr_manager_can_close_published_job(client, seed):
+    # HR Manager/Admin dong tin tuyen dung thu cong - khac voi dong tu dong
+    # khi du chi tieu (offer_service). Sau khi dong, ung vien khong con nop
+    # duoc ho so moi (da chan san o applications.py qua status != PUBLISHED).
+    hrm_headers = auth_headers(client, seed["hrm_a"]["email"])
+    job = _create_job(client, hrm_headers, seed).json()
+    client.post(f"/jobs/{job['business_id']}/publish", headers=hrm_headers)
+
+    resp = client.post(f"/jobs/{job['business_id']}/close", headers=hrm_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["status"] == "CLOSED"
+
+    from tests.conftest import register_and_login_candidate
+
+    cand_headers = register_and_login_candidate(client, "uv-close-job@example.com")
+    apply_resp = client.post(
+        "/applications",
+        json={
+            "job_business_id": job["business_id"],
+            "candidate_full_name": "Ung Vien Test",
+            "candidate_email": "uv-close-job@example.com",
+            "candidate_phone": "0900000099",
+            "source_business_id": seed["source_business_id"],
+            "ai_consent": True,
+        },
+        headers=cand_headers,
+    )
+    assert apply_resp.status_code == 404
+    assert apply_resp.json()["detail"] == "JOB_NOT_FOUND_OR_NOT_PUBLISHED"
+
+
+def test_cannot_close_job_that_is_not_published(client, seed):
+    hrm_headers = auth_headers(client, seed["hrm_a"]["email"])
+    job = _create_job(client, hrm_headers, seed).json()
+    assert job["status"] == "DRAFT"
+
+    resp = client.post(f"/jobs/{job['business_id']}/close", headers=hrm_headers)
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "JOB_NOT_PUBLISHED"
+
+
+def test_hr_cannot_close_job(client, seed):
+    hrm_headers = auth_headers(client, seed["hrm_a"]["email"])
+    job = _create_job(client, hrm_headers, seed).json()
+    client.post(f"/jobs/{job['business_id']}/publish", headers=hrm_headers)
+
+    hr_headers = auth_headers(client, seed["hr"]["email"])
+    resp = client.post(f"/jobs/{job['business_id']}/close", headers=hr_headers)
     assert resp.status_code == 403

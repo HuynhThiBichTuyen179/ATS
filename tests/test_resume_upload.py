@@ -1,5 +1,4 @@
-"""Upload CV that (PDF/DOCX) - phan hoi cau hoi 'cho phep ung vien upload file
-CV PDF' cua nguoi dung."""
+# Upload CV that (PDF/DOCX) - cho phep ung vien upload file CV PDF/DOCX.
 
 import io
 
@@ -51,12 +50,11 @@ def test_upload_docx_extracts_real_text(client, seed):
 
 
 def test_upload_accepts_pdf_with_bom_or_leading_whitespace(client, seed):
-    """v2.3 Section 1 (PDF Upload Root Cause): PDF that xuat ra tu Word 'Save
-    as PDF', trinh duyet 'In ra PDF', hoac cac cong cu export CV thuong chen
-    BOM UTF-8 (\\xef\\xbb\\xbf) hoac dong trong/whitespace TRUOC header "%PDF"
-    - van la file PDF hop le 100% nhung truoc day bi tu choi vi
-    _validate_magic_bytes() chi kiem tra dung 4 byte dau tien. Fix: quet
-    "%PDF" trong 1024 byte dau (dung ISO 32000-1 Section 7.5.2)."""
+    # PDF that xuat ra tu Word 'Save as PDF', trinh duyet 'In ra PDF', hoac
+    # cac cong cu export CV thuong chen BOM UTF-8 (\\xef\\xbb\\xbf) hoac dong
+    # trong/whitespace TRUOC header "%PDF" - van la file PDF hop le 100% nhung
+    # se bi tu choi neu _validate_magic_bytes() chi kiem tra dung 4 byte dau
+    # tien. Quet "%PDF" trong 1024 byte dau (dung ISO 32000-1, muc 7.5.2).
     headers = register_and_login_candidate(client, "uv-upload-bom@example.com")
     app_id = _apply(client, headers, seed["job_business_id"], "uv-upload-bom@example.com", seed["source_business_id"]).json()["business_id"]
 
@@ -71,9 +69,9 @@ def test_upload_accepts_pdf_with_bom_or_leading_whitespace(client, seed):
 
 
 def test_upload_still_rejects_pdf_header_too_far_from_start(client, seed):
-    """Bo di kem voi fix o tren: PDF header nam QUA XA dau file (> 1024 byte,
-    vuot muc dung sai theo spec) van phai bi tu choi - tranh fix qua long leo
-    chap nhan ca file gia mao chen '%PDF' o dau bat ky."""
+    # PDF header nam QUA XA dau file (> 1024 byte, vuot muc dung sai theo
+    # spec) van phai bi tu choi - tranh fix qua long leo chap nhan ca file
+    # gia mao chen '%PDF' o dau bat ky.
     headers = register_and_login_candidate(client, "uv-upload-farpdf@example.com")
     app_id = _apply(client, headers, seed["job_business_id"], "uv-upload-farpdf@example.com", seed["source_business_id"]).json()["business_id"]
 
@@ -133,9 +131,8 @@ def test_upload_pdf_with_no_extractable_text_flags_manual_review(client, seed):
 
 
 def test_only_owning_candidate_or_assigned_hr_can_upload(client, seed):
-    """v2.2 Section 1/5: HR duoc gan (assigned_hr_id) gio duoc phep upload CV
-    thay ung vien (phuc vu form 'Them ung vien'); Candidate khac va HR KHONG
-    duoc gan van bi chan 403 nhu truoc."""
+    # HR duoc gan (assigned_hr_id) duoc phep upload CV thay ung vien (phuc vu
+    # form 'Them ung vien'); Candidate khac va HR KHONG duoc gan van bi chan 403.
     headers1 = register_and_login_candidate(client, "uv-upload5@example.com")
     app_id = _apply(client, headers1, seed["job_business_id"], "uv-upload5@example.com", seed["source_business_id"]).json()["business_id"]
 

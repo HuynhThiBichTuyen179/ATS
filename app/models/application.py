@@ -23,31 +23,26 @@ def _utcnow():
 class Application(Base):
     __tablename__ = "applications"
     __table_args__ = (
-        # Idempotency (CHANGE 02, muc 4): cung candidate + cung Idempotency-Key
+        # Idempotency: cung candidate + cung Idempotency-Key
         # header -> tra ve application da tao, khong tao ban ghi moi. NULL duoc
-        # phep lap lai (nhieu request khong gui header van tao application binh
-        # thuong) vi UNIQUE coi nhieu NULL la khac nhau tren ca SQLite lan MySQL.
+        # phep lap lai (nhieu request khong gui header van tao application binh thuong) 
+        # vi UNIQUE coi nhieu NULL la khac nhau tren ca SQLite lan MySQL.
         UniqueConstraint("candidate_id", "idempotency_key", name="uq_application_candidate_idem"),
     )
 
     id = Column(Integer, primary_key=True)
     business_id = Column(String(20), unique=True, nullable=False, index=True)
 
-    # v2.3 Section 16/17: index tren cac cot dung de loc/join thuong xuyen
+    # index tren cac cot dung de loc/join thuong xuyen
     # (Pipeline/Kanban loc theo job_id+status, Candidate Table/scoping loc
     # theo candidate_id, bao cao Nguon loc theo source_id).
     candidate_id = Column(Integer, ForeignKey("candidates.id"), nullable=False, index=True)
     job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False, index=True)
-    # v2.2: mac dinh ke thua tu Job.department_id luc tao (Section 3 - "Job
-    # Department = Application Department"), khong cho override tu do o form.
+    # mac dinh ke thua tu Job.department_id luc tao ("Job Department =
+    # Application Department"), khong cho override tu do o form.
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     desired_salary = Column(Numeric(12, 2), nullable=True)
-    # v2.3 Section 9.3/9.4: uu tien FK vao candidate_sources (cho phep
-    # rename/disable/reporting dung theo master data) thay vi chi luu text tu
-    # do. `source` (text, da co san tu truoc) duoc GIU LAI lam snapshot ten
-    # nguon tai thoi diem nop don (Section 9.5) - bao cao lich su khong doi
-    # ngay ca khi CandidateSource sau nay bi doi ten. source_id nullable vi
-    # cac Application cu (truoc v2.3) khong co FK nay, chi co text.
+    
     source_id = Column(Integer, ForeignKey("candidate_sources.id"), nullable=True, index=True)
     source = Column(String(100), nullable=True)
 
@@ -55,7 +50,6 @@ class Application(Base):
     match_score = Column(Integer, nullable=True)
     assigned_hr_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    # CHANGE 02: KHONG co field/logic cooldown 90-ngay o day hoac o service layer.
     # Re-apply cung mot Job luon duoc phep - moi lan Apply hop le tao 1 dong moi,
     # khong overwrite Application cu (immutable historical record).
     needs_manual_review = Column(Integer, default=0, nullable=False)  # 0/1 (bool cho SQLite)

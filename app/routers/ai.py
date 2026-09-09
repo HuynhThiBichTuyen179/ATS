@@ -33,12 +33,10 @@ def analyze(
     try:
         analysis = ai_service.run_screening(db, application, current_user)
     except ai_service.AIAnalysisError as e:
-        # BO STUB (theo yeu cau nguoi dung): chua cau hinh key hoac goi that
-        # bai deu bao loi CU THE cho nguoi dung, khong am tham tra du lieu gia.
+        # chua cau hinh key hoac goi that bai deu bao loi CU THE cho nguoi dung
         raise HTTPException(e.status_code, e.detail)
     if analysis is None:
-        # v2 Phan 9.4: AI khong chay duoc (khong co CV text) -> 202, khong
-        # phai loi 500, de frontend hien dung trang thai thay vi coi la bug.
+        # AI khong chay duoc (khong co CV text) -> 202, khong phai loi 500, de frontend hien dung trang thai thay vi coi la bug.
         response.status_code = status.HTTP_202_ACCEPTED
         return {"needs_manual_review": True, "detail": "NO_RESUME_TEXT_AVAILABLE"}
     return AIAnalysisOut.from_model(analysis)

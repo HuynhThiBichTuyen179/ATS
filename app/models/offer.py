@@ -25,9 +25,7 @@ def _utcnow():
 class Offer(Base):
     __tablename__ = "offers"
     __table_args__ = (
-        # CHANGE 01, muc 4/13: approver_id PHAI khac creator_id. NULL van hop le
-        # (chua submit/chua duyet) vi so sanh voi NULL tra ve UNKNOWN, khong vi
-        # pham CHECK. Day la lop bao ve o DB, ben canh enforce o service layer.
+
         CheckConstraint(
             "approver_id IS NULL OR approver_id != creator_id",
             name="ck_offer_approver_not_creator",
@@ -39,7 +37,7 @@ class Offer(Base):
 
     application_id = Column(Integer, ForeignKey("applications.id"), nullable=False)
 
-    # CHANGE 01: bat buoc phan biet nguoi tao va nguoi duyet
+    # bat buoc phan biet nguoi tao va nguoi duyet
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     approver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 

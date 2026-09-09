@@ -1,5 +1,5 @@
-"""v2.2 Section 26-34/47 - Interview Calendar (module hoan toan moi - model
-`interviews` da co san tu truoc nhung chua tung co API/test nao dung toi)."""
+# Interview Calendar - model `interviews` da co san tu truoc nhung chua tung
+# co API/test nao dung toi.
 
 from tests.conftest import auth_headers, register_and_login_candidate
 
@@ -19,11 +19,9 @@ def _apply(client, seed):
 
 
 def test_hr_can_list_interviewers(client, seed):
-    """BUG FIX: form 'Them lich phong van' goi GET /users (chi HR_MANAGER/
-    ADMIN) de do dropdown nguoi phong van - HR mo modal nay bi 403 ngam,
-    dropdown luon rong. GET /users/interviewers (rieng, hep hon GET /users)
-    phai cho HR goi duoc va tra ve ca HR/HR_MANAGER/ADMIN (dung nhu
-    interview_service cho phep bat ky role khac CANDIDATE lam interviewer)."""
+    # GET /users/interviewers (rieng, hep hon GET /users) phai cho HR goi duoc
+    # va tra ve ca HR/HR_MANAGER/ADMIN (dung nhu interview_service cho phep
+    # bat ky role khac CANDIDATE lam interviewer).
     hr_headers = auth_headers(client, seed["hr"]["email"])
     resp = client.get("/users/interviewers", headers=hr_headers)
     assert resp.status_code == 200, resp.text
@@ -57,7 +55,7 @@ def test_hr_creates_interview_and_conflict_detection(client, seed):
     interview_id = resp.json()["business_id"]
     assert resp.json()["status"] == "SCHEDULED"
 
-    # Section 32: trung lich (cung interviewer, cung candidate, gio giao nhau) -> 409.
+    # Trung lich (cung interviewer, cung candidate, gio giao nhau) -> 409.
     resp = client.post("/interviews", json=payload, headers=hr_headers)
     assert resp.status_code == 409
     assert resp.json()["detail"] == "INTERVIEW_TIME_CONFLICT"
@@ -112,8 +110,8 @@ def test_candidate_sees_only_own_interview_no_internal_notes(client, seed):
     resp = client.get("/interviews/me", headers=cand_headers)
     assert resp.status_code == 200
     assert len(resp.json()) == 1
-    # InterviewOut co field notes (HR nhap) - Section 33 yeu cau KHONG lo
-    # "internal notes"/"HR feedback" cho candidate; o day notes la ghi chu ve
+    # InterviewOut co field notes (HR nhap) - KHONG duoc lo "internal notes"/
+    # "HR feedback" cho candidate; o day notes la ghi chu ve
     # buoi phong van (thong tin lich), khac voi feedback/rating noi bo.
     assert "rating" not in resp.json()[0]
     assert "feedback" not in resp.json()[0]
@@ -134,7 +132,7 @@ def test_candidate_cannot_crud_interview(client, seed):
 
 
 def test_hr_only_manages_interview_within_assigned_scope(client, seed):
-    """HR chi CRUD Interview cua Application duoc gan cho minh."""
+    # HR chi CRUD Interview cua Application duoc gan cho minh.
     hrm_headers = auth_headers(client, seed["hrm_a"]["email"])
     other_hr = client.post(
         "/users",

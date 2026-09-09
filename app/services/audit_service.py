@@ -18,9 +18,8 @@ def log(
     after: dict[str, Any] | None = None,
     reason: str | None = None,
 ) -> AuditLog:
-    """Ghi 1 dong audit_logs. KHONG commit - nam trong cung transaction voi
-    hanh dong nghiep vu goi no, de dam bao audit va thay doi du lieu la atomic.
-    """
+    # Ghi 1 dong audit_logs. KHONG commit - nam trong cung transaction voi
+    # hanh dong nghiep vu goi no, de dam bao audit va thay doi du lieu la atomic.
     entry = AuditLog(
         business_id=generate_business_id(db, "audit_log"),
         actor_user_id=actor.id,

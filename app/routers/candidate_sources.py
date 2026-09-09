@@ -47,15 +47,14 @@ def list_sources(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Section 35: HR/HR_MANAGER "View", Admin "CRUD" - moi vai tro noi bo deu
-    # xem duoc de dung trong dropdown form Them ung vien.
-    # v2.3 Section 9.1/21: Candidate PHAI xem duoc danh sach Nguon ho so (chi
-    # cac nguon ACTIVE, khong xem duoc nguon da INACTIVE/quan ly) de chon o
-    # form Ung tuyen - day la quyen XEM read-only de tu phuc vu, khong phai
-    # quyen "Candidate Source Management" (van chi HR+ trong RBAC table).
-    # BUG FIX: truoc day chan hoan toan CANDIDATE -> dropdown "Nguon ho so"
-    # luon rong khi Candidate mo form Ung tuyen, du Admin da cau hinh san
-    # nguon (frontend nuot loi 403 lang le nen nhin nhu "chua cau hinh").
+    # HR/HR_MANAGER "View", Admin "CRUD" - moi vai tro noi bo deu xem duoc de
+    # dung trong dropdown form Them ung vien.
+    # Candidate PHAI xem duoc danh sach Nguon ho so (chi cac nguon ACTIVE,
+    # khong xem duoc nguon da INACTIVE/quan ly) de chon o form Ung tuyen - day
+    # la quyen XEM read-only de tu phuc vu, khong phai quyen "Candidate Source
+    # Management" (van chi HR+ trong RBAC table). Neu chan hoan toan CANDIDATE
+    # thi dropdown "Nguon ho so" se luon rong khi Candidate mo form Ung
+    # tuyen, du da cau hinh san nguon.
     if current_user.role.value == "CANDIDATE":
         return [_to_out(s) for s in db.query(CandidateSource).filter(CandidateSource.status == CandidateSourceStatus.ACTIVE).order_by(CandidateSource.id).all()]
     return [_to_out(s) for s in db.query(CandidateSource).order_by(CandidateSource.id).all()]
@@ -100,10 +99,10 @@ def delete_source(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    """Soft-delete (INACTIVE), khong xoa cung - Application.source_id (FK, v2.3)
-    van tro toi ban ghi nay de bao toan lich su/bao cao, Application.source la
-    snapshot text tai thoi diem nop don nen cung khong bi anh huong; nhat quan
-    voi cach soft-delete cua Department/User."""
+    # Soft-delete (INACTIVE), khong xoa cung - Application.source_id (FK) van
+    # tro toi ban ghi nay de bao toan lich su/bao cao, Application.source la
+    # snapshot text tai thoi diem nop don nen cung khong bi anh huong; nhat quan
+    # voi cach soft-delete cua Department/User.
     source = db.query(CandidateSource).filter(CandidateSource.business_id == source_business_id).first()
     if not source:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "SOURCE_NOT_FOUND")

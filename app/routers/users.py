@@ -13,10 +13,8 @@ from app.services import audit_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-# UC-A01 (v2 Phan 21.5) - Admin quan ly toan bo user; HR Manager chi tao/xem
-# duoc HR (khop RBAC 4.1 "User & HR Management": HR Manager "Xem & phan cong
-# HR", Admin "Full quyen User"). v2.2: ap dung lai dung ranh gioi nay cho
-# Sua/Xoa (deactivate) - HR Manager KHONG duoc dong voi HR_MANAGER/ADMIN khac.
+# Admin quan ly toan bo user; HR Manager chi tao/xem/sua/xoa (deactivate)
+# duoc tai khoan vai tro HR - khong duoc dong voi HR_MANAGER/ADMIN khac.
 _ROLES_HR_MANAGER_CAN_CREATE = {UserRole.HR}
 _ROLES_ADMIN_CAN_CREATE = {UserRole.HR, UserRole.HR_MANAGER, UserRole.ADMIN}
 
@@ -89,18 +87,14 @@ def list_interviewers(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    """Danh sach noi bo co the duoc chon lam nguoi phong van (HR/HR_MANAGER/
-    ADMIN deu duoc chon - khop interview_service cho phep bat ky role khac
-    CANDIDATE lam interviewer). Rieng biet voi GET /users (chi HR_MANAGER/
-    ADMIN, mang y nghia "quan ly tai khoan noi bo") de KHONG mo rong quyen
-    quan ly cho HR - day chi la 1 danh sach xem de chon, khong lam duoc gi
-    khac voi ket qua tra ve. BUG FIX: truoc day form 'Them lich phong van'
-    goi thang GET /users (chi HR_MANAGER/ADMIN) de do dropdown nguoi phong
-    van - HR mo modal nay bi 403 ngam (frontend nuot loi), dropdown luon rong,
-    khong chon duoc ai ca dai voi vai tro HR bat ke ho co quyen tao Interview.
-    Phai khai bao TRUOC route "/{user_business_id}" ben duoi, neu khong
-    FastAPI se hieu "interviewers" la 1 gia tri user_business_id.
-    """
+    # Danh sach noi bo co the duoc chon lam nguoi phong van (HR/HR_MANAGER/
+    # ADMIN deu duoc chon - khop interview_service cho phep bat ky role khac
+    # CANDIDATE lam interviewer). Rieng biet voi GET /users (chi HR_MANAGER/
+    # ADMIN, mang y nghia "quan ly tai khoan noi bo") de KHONG mo rong quyen
+    # quan ly cho HR - day chi la 1 danh sach xem de chon, khong lam duoc gi
+    # khac voi ket qua tra ve.
+    # Phai khai bao TRUOC route "/{user_business_id}" ben duoi, neu khong
+    # FastAPI se hieu "interviewers" la 1 gia tri user_business_id.
     users = db.query(User).filter(User.role != UserRole.CANDIDATE, User.status == UserStatus.ACTIVE).order_by(User.full_name).all()
     return [_to_out(db, u) for u in users]
 
@@ -112,6 +106,11 @@ def list_users(
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
     query = db.query(User).filter(User.role != UserRole.CANDIDATE)
+    # HR_MANAGER chi duoc THAY tai khoan trong pham vi minh duoc QUAN LY
+    # (_ROLES_HR_MANAGER_CAN_CREATE = {HR}) - khong duoc thay danh sach
+    # Admin/HR_MANAGER khac. Admin khong bi gioi han - xem/quan ly duoc ca 3 vai tro.
+    if current_user.role == UserRole.HR_MANAGER:
+        query = query.filter(User.role.in_(_ROLES_HR_MANAGER_CAN_CREATE))
     if role:
         try:
             query = query.filter(User.role == UserRole(role))
@@ -129,6 +128,10 @@ def get_user(
     user = db.query(User).filter(User.business_id == user_business_id, User.role != UserRole.CANDIDATE).first()
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "USER_NOT_FOUND")
+    # Cung 1 pham vi voi update_user/deactivate_user (_check_manage_scope) -
+    # HR_MANAGER khong duoc XEM chi tiet tai khoan ngoai pham vi (VD doan duoc
+    # business_id cua 1 Admin roi goi thang GET nay).
+    _check_manage_scope(current_user, user.role, error_code="NOT_ALLOWED_TO_VIEW_THIS_ROLE")
     return _to_out(db, user)
 
 
@@ -177,9 +180,9 @@ def deactivate_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    """Section 14: uu tien Deactivate (status=INACTIVE) thay vi hard delete -
-    khong bao gio xoa vat ly de khong mat Audit/Application/Job/Interview/
-    Offer/Email history da gan voi user nay."""
+    # Uu tien Deactivate (status=INACTIVE) thay vi hard delete - khong bao gio
+    # xoa vat ly de khong mat Audit/Application/Job/Interview/Offer/Email
+    # history da gan voi user nay.
     user = db.query(User).filter(User.business_id == user_business_id, User.role != UserRole.CANDIDATE).first()
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "USER_NOT_FOUND")

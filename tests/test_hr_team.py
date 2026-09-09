@@ -1,4 +1,4 @@
-"""v2.2 Section 12-14/47 - HR Team edit/deactivate (PUT/DELETE /users/{id} moi bo sung)."""
+# HR Team edit/deactivate (PUT/DELETE /users/{id}).
 
 from tests.conftest import auth_headers
 
@@ -16,7 +16,7 @@ def test_admin_edit_and_deactivate_hr(client, seed):
     assert resp.status_code == 200
     assert resp.json()["full_name"] == "Ten Moi"
 
-    # Password KHONG bao gio xuat hien trong response (Section 13).
+    # Password KHONG bao gio xuat hien trong response.
     assert "password" not in resp.json()
     assert "password_hash" not in resp.json()
 
@@ -49,3 +49,32 @@ def test_cannot_deactivate_self(client, seed):
     resp = client.delete(f"/users/{seed['admin']['business_id']}", headers=admin_headers)
     assert resp.status_code == 400
     assert resp.json()["detail"] == "CANNOT_DEACTIVATE_SELF"
+
+
+def test_hr_manager_list_users_only_sees_hr_accounts(client, seed):
+    # GET /users chi tra ve dung pham vi vai tro nguoi goi duoc quan ly:
+    # HR_MANAGER chi thay HR; Admin thay du ca 3 vai tro.
+    hrm_a_headers = auth_headers(client, seed["hrm_a"]["email"])
+    resp = client.get("/users", headers=hrm_a_headers)
+    assert resp.status_code == 200, resp.text
+    roles_seen = {u["role"] for u in resp.json()}
+    assert roles_seen == {"HR"}
+
+    admin_headers = auth_headers(client, seed["admin"]["email"])
+    resp = client.get("/users", headers=admin_headers)
+    assert resp.status_code == 200, resp.text
+    roles_seen = {u["role"] for u in resp.json()}
+    assert "HR_MANAGER" in roles_seen
+    assert "ADMIN" in roles_seen
+
+
+def test_hr_manager_cannot_view_admin_or_other_hr_manager_detail(client, seed):
+    hrm_a_headers = auth_headers(client, seed["hrm_a"]["email"])
+    resp = client.get(f"/users/{seed['admin']['business_id']}", headers=hrm_a_headers)
+    assert resp.status_code == 403
+
+    resp = client.get(f"/users/{seed['hrm_b']['business_id']}", headers=hrm_a_headers)
+    assert resp.status_code == 403
+
+    resp = client.get(f"/users/{seed['hr']['business_id']}", headers=hrm_a_headers)
+    assert resp.status_code == 200

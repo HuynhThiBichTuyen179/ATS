@@ -13,6 +13,7 @@ from app.models.enums import UserRole
 from app.models.job import Job
 from app.models.user import User
 from app.schemas.job import AssignHrRequest, JobCreateRequest, JobOut, JobUpdateRequest
+from app.services import audit_service
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -96,10 +97,9 @@ def assign_hr(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    """UC-M03 (v2 Phan 21.4): phan cong/doi HR phu trach Job. Thieu endpoint
-    nay thi RBAC row-level scope 'HR chi xu ly Job duoc gan' (Rule 5, Phan 4.2)
-    khong the hoat dong voi bat ky Job nao tao qua API that.
-    """
+    # Phan cong/doi HR phu trach Job. Thieu endpoint nay thi RBAC row-level
+    # scope "HR chi xu ly Job duoc gan" khong the hoat dong voi bat ky Job nao
+    # tao qua API that.
     job = db.query(Job).filter(Job.business_id == job_business_id).first()
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")
@@ -118,9 +118,8 @@ def publish_job(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    """Don gian hoa: HR Manager/Admin duyet va dang tin trong 1 buoc. Quy trinh
-    day du DRAFT->PENDING_APPROVAL->APPROVED->PUBLISHED (v2 Phan 3.1) la backlog.
-    """
+    # Don gian hoa: HR Manager/Admin duyet va dang tin trong 1 buoc. Quy trinh
+    # day du DRAFT->PENDING_APPROVAL->APPROVED->PUBLISHED la backlog.
     job = db.query(Job).filter(Job.business_id == job_business_id).first()
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")
@@ -134,6 +133,37 @@ def publish_job(
     return _to_out(db, job)
 
 
+@router.post("/{job_business_id}/close", response_model=JobOut)
+def close_job(
+    job_business_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_hr_manager_or_admin),
+):
+    # Dong tin tuyen dung thu cong (HR Manager/Admin) - ngoai truong hop tu
+    # dong dong khi du chi tieu (xem offer_service.py::_close_job_if_quota_reached,
+    # action JOB_AUTO_CLOSED_QUOTA_REACHED). Chi cho dong tin dang PUBLISHED -
+    # dong tin DRAFT/CLOSED/CANCELLED khong co y nghia nghiep vu. Sau khi
+    # CLOSED, POST /applications se tu chan ung vien nop moi (da kiem tra
+    # job.status == PUBLISHED san co o applications.py).
+    job = db.query(Job).filter(Job.business_id == job_business_id).first()
+    if not job:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")
+    if job.status != JobStatus.PUBLISHED:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "JOB_NOT_PUBLISHED")
+
+    before = {"status": job.status.value}
+    job.status = JobStatus.CLOSED
+    db.flush()
+    audit_service.log(
+        db, actor=current_user, action="JOB_CLOSED_MANUALLY",
+        entity_type="job", entity_business_id=job.business_id,
+        before=before, after={"status": job.status.value},
+    )
+    db.commit()
+    db.refresh(job)
+    return _to_out(db, job)
+
+
 @router.put("/{job_business_id}", response_model=JobOut)
 def update_job(
     job_business_id: str,
@@ -141,9 +171,9 @@ def update_job(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    """Sua tin tuyen dung - cho phep bat ke dang DRAFT hay da PUBLISHED (theo
-    yeu cau nguoi dung, khac voi cac he thong chi cho sua khi con nhap).
-    Khong doi department/status/assigned_hr qua day."""
+    # Sua tin tuyen dung - cho phep bat ke dang DRAFT hay da PUBLISHED. Khong
+    # doi department/status/assigned_hr qua day - da co route rieng
+    # (/assign-hr, /publish).
     job = db.query(Job).filter(Job.business_id == job_business_id).first()
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")
@@ -208,12 +238,10 @@ def get_job(
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
-    """v2.3 Section 8.4 (fix Gap G-07-1 da ghi nhan tu truoc): truoc day
-    endpoint nay KHONG xac thuc va KHONG loc theo status - Job DRAFT/CLOSED
-    (kem khoang luong noi bo) lo cho nguoi chua dang nhap neu doan duoc
-    business_id. Nay: nguoi chua dang nhap hoac CANDIDATE chi xem duoc Job
-    PUBLISHED (giong het logic list_jobs); HR+ xem duoc moi trang thai.
-    """
+    # Endpoint nay phai xac thuc va loc theo status - neu khong, Job DRAFT/
+    # CLOSED (kem khoang luong noi bo) se lo cho nguoi chua dang nhap neu doan
+    # duoc business_id. Nguoi chua dang nhap hoac CANDIDATE chi xem duoc Job
+    # PUBLISHED (giong het logic list_jobs); HR+ xem duoc moi trang thai.
     job = db.query(Job).filter(Job.business_id == job_business_id).first()
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "JOB_NOT_FOUND")

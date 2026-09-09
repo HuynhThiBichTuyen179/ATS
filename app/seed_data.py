@@ -1,10 +1,9 @@
-"""Seed du lieu toi thieu de chay thu API va lam co so cho manual test.
-Chay: python -m app.seed_data
-
-Idempotent THEO TUNG EMAIL CU THE (khong phai theo "co user nao chua") - neu
-ban da tu dang ky mot Candidate that truoc khi chay script nay, du lieu do van
-duoc giu nguyen; script chi tao them cac tai khoan demo con thieu.
-"""
+# Seed du lieu toi thieu de chay thu API va lam co so cho manual test.
+# Chay: python -m app.seed_data
+#
+# Idempotent THEO TUNG EMAIL CU THE (khong phai theo "co user nao chua") - neu
+# ban da tu dang ky mot Candidate that truoc khi chay script nay, du lieu do
+# van duoc giu nguyen; script chi tao them cac tai khoan demo con thieu.
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.id_generator import generate_business_id
@@ -17,18 +16,13 @@ from app.models.user import User
 
 DEMO_DEPARTMENT_NAME = "Cong nghe thong tin"
 DEMO_USERS = [
-    ("admin@example.com", "Admin BGD", "Admin@123", UserRole.ADMIN),
+    ("admin@example.com", "Admin", "Admin@123", UserRole.ADMIN),
     ("hrmanager.a@example.com", "HR Manager A", "HrManager@123", UserRole.HR_MANAGER),
     ("hrmanager.b@example.com", "HR Manager B", "HrManager@123", UserRole.HR_MANAGER),
     ("hr.a@example.com", "HR Nguyen Van A", "Hr@123456", UserRole.HR),
 ]
 
-# Mau Email mac dinh cho 8 loai su kien (EmailTemplateType) - de kenh gui tu
-# dong (trigger_stage_email) thuc su co mau ACTIVE de dung, khong bi bo qua
-# im lang (EMAIL-7) chi vi chua ai tao mau nao ca.
-# CAP NHAT 2026-08-18: dong bo lai tieng Viet co dau dung theo noi dung nguoi
-# dung da tu sua qua giao dien "Mau Email" (khong con ban ASCII "khong dau" cu)
-# - de fresh install/seed lai van ra dung noi dung da duoc chinh sua thu cong.
+
 DEMO_EMAIL_TEMPLATES = [
     (
         EmailTemplateType.APPLICATION_RECEIVED,
@@ -96,10 +90,7 @@ DEMO_EMAIL_TEMPLATES = [
         "Trân trọng,\n{{company_name}}",
     ),
     (
-        # BUG FIX (V2.3): truoc day KHONG co mau nao loai PASSWORD_RESET ->
-        # forgot-password luon "thanh cong" (phan hoi trung tinh) nhung im
-        # lang KHONG gui email nao ca. Bien dung: user_name/reset_link/
-        # company_name/expiry_minutes (khop dung voi variables trong service).
+        
         EmailTemplateType.PASSWORD_RESET,
         "ĐẶT LẠI MẬT KHẨU",
         "[{{company_name}}] Yêu cầu đặt lại mật khẩu",

@@ -1,5 +1,5 @@
-"""v2.2 Section 1/47 - HR/HR_MANAGER/ADMIN tao ho so ung vien truc tiep,
-Candidate KHONG duoc tao ho so ung vien khac."""
+# HR/HR_MANAGER/ADMIN tao ho so ung vien truc tiep, Candidate KHONG duoc tao
+# ho so ung vien khac.
 
 from tests.conftest import auth_headers, register_and_login_candidate
 
@@ -52,8 +52,8 @@ def test_candidate_creation_links_job_by_id_and_inherits_department(client, seed
     assert resp.status_code == 200, resp.text
     candidate_business_id = resp.json()["business_id"]
 
-    # Section 2/3: Application phai lien ket dung Job (theo ID) va ke thua
-    # dung Department tu Job, khong duoc de trong/sai.
+    # Application phai lien ket dung Job (theo ID) va ke thua dung Department
+    # tu Job, khong duoc de trong/sai.
     apps = client.get(f"/applications?job_business_id={seed['job_business_id']}", headers=headers).json()
     app = next(a for a in apps if a["candidate_business_id"] == candidate_business_id)
     assert app["job_business_id"] == seed["job_business_id"]

@@ -34,9 +34,9 @@ def create_template(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    # v2.3 Section 2.2: Template Code (= business_id, tu sinh, da unique qua
-    # generate_business_id) khong duoc trung - bo sung them check trung TEN
-    # (name) vi day la dinh danh nguoi dung nhin thay/chon khi gui email.
+    # Template Code (= business_id, tu sinh, da unique qua generate_business_id)
+    # khong duoc trung - bo sung them check trung TEN (name) vi day la dinh
+    # danh nguoi dung nhin thay/chon khi gui email.
     try:
         email_type = EmailTemplateType(payload.type)
     except ValueError:
@@ -91,10 +91,9 @@ def update_template(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_manager_or_admin),
 ):
-    # v2.3 Section 2: HR_MANAGER va ADMIN deu sua duoc (require_hr_manager_or_admin
-    # da dung dung tu ban dau - xac nhan lai, khong doi). Section 2.2: khong
-    # cho sua business_id/created_at/created_by/type (giu bat bien - type
-    # khong nam trong EmailTemplateUpdateRequest nen khong the bi sua o day).
+    # HR_MANAGER va ADMIN deu sua duoc. Khong cho sua business_id/created_at/
+    # created_by/type (giu bat bien - type khong nam trong
+    # EmailTemplateUpdateRequest nen khong the bi sua o day).
     template = db.query(EmailTemplate).filter(EmailTemplate.business_id == template_business_id).first()
     if not template:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "TEMPLATE_NOT_FOUND")
@@ -120,9 +119,9 @@ def update_template(
         changed_fields.append("status")
 
     db.flush()
-    # Section 2.3: audit EMAIL_TEMPLATE_UPDATED voi actor/template_id/timestamp
-    # (tu dong qua AuditLog.created_at)/changed fields + before-after. Khong
-    # log thong tin nhay cam (template khong chua password/token nen an toan).
+    # Audit EMAIL_TEMPLATE_UPDATED voi actor/template_id/timestamp (tu dong
+    # qua AuditLog.created_at)/changed fields + before-after. Khong log thong
+    # tin nhay cam (template khong chua password/token nen an toan).
     audit_service.log(
         db, actor=current_user, action="EMAIL_TEMPLATE_UPDATED",
         entity_type="email_template", entity_business_id=template.business_id,
@@ -180,14 +179,13 @@ def send_manual_email(
         "job_title": application.job.title,
         "company_name": app_settings.company_name,
     }
-    # BUG FIX: truoc day chi co 3 bien tren - mau nao co placeholder rieng
-    # cua tung giai doan (VD {{start_date}}, {{offer_salary}}, {{interview_time}})
-    # se hien nguyen chuoi "{{...}}" khong duoc thay the khi gui thu cong (da
-    # xac nhan qua email that nhan duoc). Bo sung them bang cach tim ban ghi
-    # Offer/Interview GAN NHAT cua Application nay (neu co) - dung best-effort,
-    # khong bat buoc phai ton tai (VD mau OFFER duoc chon cho mot Application
-    # chua tung co Offer thi placeholder do van hien nguyen, khong co gia tri
-    # nao hop ly de dien vao).
+    # Chi co 3 bien tren la khong du - mau nao co placeholder rieng cua tung
+    # giai doan (VD {{start_date}}, {{offer_salary}}, {{interview_time}}) se
+    # hien nguyen chuoi "{{...}}" khong duoc thay the khi gui thu cong. Bo
+    # sung them bang cach tim ban ghi Offer/Interview GAN NHAT cua Application
+    # nay (neu co) - dung best-effort, khong bat buoc phai ton tai (VD mau
+    # OFFER duoc chon cho mot Application chua tung co Offer thi placeholder
+    # do van hien nguyen, khong co gia tri nao hop ly de dien vao).
     latest_offer = (
         db.query(Offer).filter(Offer.application_id == application.id).order_by(Offer.id.desc()).first()
     )

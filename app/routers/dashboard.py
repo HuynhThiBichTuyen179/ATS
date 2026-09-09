@@ -15,10 +15,8 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/summary", response_model=DashboardSummaryOut)
 def get_summary(db: Session = Depends(get_db), current_user: User = Depends(require_hr_or_above)):
-    """Cong thuc dung theo v2 Phan 12.2. HR chi thay so lieu trong scope
-    duoc gan (assigned_hr_id) - khop RBAC 4.1 'Dashboard & Bao cao: HR: Scope
-    job gan'; HR Manager/Admin thay toan bo he thong.
-    """
+    # HR chi thay so lieu trong scope duoc gan (assigned_hr_id); HR
+    # Manager/Admin thay toan bo he thong.
     job_query = db.query(Job)
     app_query = db.query(Application)
     if current_user.role == UserRole.HR:

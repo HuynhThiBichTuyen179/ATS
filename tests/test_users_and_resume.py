@@ -1,5 +1,5 @@
-"""Tinh nang moi bo sung khi doi chieu voi file HTML tham khao: (1) quan ly
-tai khoan HR qua API; (2) dan text CV luc Apply, luu that vao bang resumes."""
+# (1) Quan ly tai khoan HR qua API; (2) dan text CV luc Apply, luu that vao
+# bang resumes.
 
 from tests.conftest import auth_headers, register_and_login_candidate
 
@@ -87,9 +87,9 @@ def test_apply_with_pasted_resume_text_is_saved(client, seed):
 
 
 def test_hr_can_edit_only_assigned_candidate(client, seed):
-    """v2.3 Section 15/16 RBAC: Sua Candidate = Own/Scoped/Full/Full. HR chi
-    duoc sua ho so Candidate co it nhat 1 Application dang assigned_hr_id cho
-    minh - HR khong duoc gan phai bi tu choi o backend (khong chi an nut FE)."""
+    # RBAC: Sua Candidate = Own/Scoped/Full/Full. HR chi duoc sua ho so
+    # Candidate co it nhat 1 Application dang assigned_hr_id cho minh - HR
+    # khong duoc gan phai bi tu choi o backend (khong chi an nut FE).
     candidate_headers = register_and_login_candidate(client, "uv-scope1@example.com")
     resp = client.post(
         "/applications",
@@ -130,9 +130,9 @@ def test_hr_can_edit_only_assigned_candidate(client, seed):
 
 
 def test_apply_accepts_optional_profile_fields(client, seed):
-    """Candidate tu ung tuyen duoc phep (khong bat buoc) khai bao them gioi
-    tinh/tom tat ky nang/tom tat kinh nghiem/luong mong muon - truoc day cac
-    truong nay chi HR nhap ho duoc qua 'Them ung vien'."""
+    # Candidate tu ung tuyen duoc phep (khong bat buoc) khai bao them gioi
+    # tinh/tom tat ky nang/tom tat kinh nghiem/luong mong muon - truoc day
+    # cac truong nay chi HR nhap ho duoc qua 'Them ung vien'.
     headers = register_and_login_candidate(client, "uv-optional-fields@example.com")
     resp = client.post(
         "/applications",
@@ -157,9 +157,8 @@ def test_apply_accepts_optional_profile_fields(client, seed):
     assert body["candidate_experience_summary"] == "3 nam Backend Developer"
     assert body["desired_salary"] == 25000000
 
-    # Ung tuyen lai (cung Job, khong cooldown - CHANGE 02) nhung LAN NAY bo
-    # trong het cac truong tuy chon - profile da co san tu lan truoc KHONG bi
-    # ghi de thanh rong.
+    # Ung tuyen lai (cung Job, khong cooldown) nhung LAN NAY bo trong het cac
+    # truong tuy chon - profile da co san tu lan truoc KHONG bi ghi de thanh rong.
     resp2 = client.post(
         "/applications",
         json={

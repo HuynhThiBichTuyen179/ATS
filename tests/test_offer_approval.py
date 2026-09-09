@@ -1,6 +1,4 @@
-"""CHANGE 01 - Offer 4-eyes approval.
-Bao phu cac tinh huong quan trong nhat trong 16 test case goc.
-"""
+# Offer 4-eyes approval - bao phu cac tinh huong quan trong nhat.
 
 from app.core.id_generator import generate_business_id
 from app.models.application import Application
@@ -71,7 +69,7 @@ def test_offer_business_id_has_off_prefix(client, db, seed):
 
 
 def test_hr_cannot_approve_offer(client, db, seed):
-    """HR khong bao gio co quyen Approve, bat ke ai tao Offer (Permission Matrix)."""
+    # HR khong bao gio co quyen Approve, bat ke ai tao Offer (Permission Matrix).
     offer_id = _create_and_submit_offer(client, db, seed, seed["hrm_a"]["email"])
     headers = auth_headers(client, seed["hr"]["email"])
     resp = client.post(f"/offers/{offer_id}/approve", headers=headers)
@@ -79,7 +77,7 @@ def test_hr_cannot_approve_offer(client, db, seed):
 
 
 def test_creator_cannot_approve_own_offer(client, db, seed):
-    """Trai tim cua CHANGE 01: creator_id != approver_id."""
+    # Trai tim cua 4-eyes approval: creator_id != approver_id.
     offer_id = _create_and_submit_offer(client, db, seed, seed["hrm_a"]["email"])
     headers = auth_headers(client, seed["hrm_a"]["email"])
     resp = client.post(f"/offers/{offer_id}/approve", headers=headers)

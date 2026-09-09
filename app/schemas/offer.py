@@ -22,9 +22,7 @@ class OfferRespondRequest(BaseModel):
 class OfferOut(BaseModel):
     business_id: str
     application_business_id: str
-    # v2.3 fix: man hinh "Offer cho duyet" truoc day chi co ID tho (khong ro
-    # duyet cho ai/vi tri gi) - bo sung du thong tin ung vien + Job de nguoi
-    # duyet quyet dinh duoc ma khong phai mo rieng Application.
+    # bo sung du thong tin ung vien + Job de nguoi duyet quyet dinh duoc ma khong phai mo rieng Application.
     candidate_business_id: str
     candidate_full_name: str
     candidate_email: str

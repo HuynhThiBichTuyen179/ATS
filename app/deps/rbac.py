@@ -23,12 +23,7 @@ def get_current_user(token: str | None = Depends(oauth2_scheme), db: Session = D
 
 
 def get_current_user_optional(token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User | None:
-    """dung cho endpoint public co the truy cap ca khi
-    chua dang nhap (Job Detail cong khai) NHUNG van can biet actor la ai (neu
-    co) de quyet dinh pham vi hien thi (VD Job DRAFT chi HR+ thay duoc, con
-    Candidate/anonymous chi thay PUBLISHED) - khac get_current_user() luon
-    bat buoc token hop le.
-    """
+    
     if token is None:
         return None
     payload = decode_access_token(token)
@@ -46,10 +41,9 @@ def require_roles(*roles: UserRole):
     return _dependency
 
 
-# Ai co quyen approval Offer (Phan 3 CHANGE 01 - Permission Matrix)
+# Ai co quyen approval Offer 
 require_offer_approver = require_roles(UserRole.HR_MANAGER, UserRole.ADMIN)
 require_hr_or_above = require_roles(UserRole.HR, UserRole.HR_MANAGER, UserRole.ADMIN)
 require_hr_manager_or_admin = require_roles(UserRole.HR_MANAGER, UserRole.ADMIN)
-# Audit Log: chi ADMIN (BGD) duoc xem - thu hep tu require_hr_manager_or_admin
-# theo yeu cau nguoi dung, HR_MANAGER khong con xem duoc nua.
+# Audit Log: chi ADMIN duoc xem 
 require_admin = require_roles(UserRole.ADMIN)

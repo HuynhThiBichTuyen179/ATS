@@ -16,8 +16,8 @@ class AIAnalysis(Base):
     id = Column(Integer, primary_key=True)
     business_id = Column(String(20), unique=True, nullable=False, index=True)
 
-    # v2 Phan 5.7: KHONG con Unique 1-1 - cho phep nhieu lan re-run AI cho cung 1
-    # application, giu lai lich su de audit khi doi model/prompt.
+    # Khong Unique 1-1 - cho phep nhieu lan re-run AI cho cung 1 application,
+    # giu lai lich su de audit khi doi model/prompt.
     application_id = Column(Integer, ForeignKey("applications.id"), nullable=False, index=True)
     is_latest = Column(Boolean, nullable=False, default=True)
 

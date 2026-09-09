@@ -1,5 +1,5 @@
-"""v2.3 Section 5/18 - PUT /applications/{id}: sua Luong mong muon / Nguon
-ho so tu Candidate Table (khong phai qua Kanban drag-drop)."""
+# PUT /applications/{id}: sua Luong mong muon / Nguon ho so tu Candidate
+# Table (khong phai qua Kanban drag-drop).
 
 from tests.conftest import auth_headers, register_and_login_candidate
 

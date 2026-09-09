@@ -1,7 +1,6 @@
-"""CHANGE 03 - Business ID: prefix + so tuan tu, khong PII, concurrency-safe.
-KHONG duoc dung SELECT MAX(id)+1 - test 27 kiem chung dieu nay bang concurrency
-that (ThreadPoolExecutor + session rieng cho tung thread).
-"""
+# Business ID: prefix + so tuan tu, khong PII, concurrency-safe. KHONG duoc
+# dung SELECT MAX(id)+1 - kiem chung dieu nay bang concurrency that
+# (ThreadPoolExecutor + session rieng cho tung thread).
 
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -49,9 +48,8 @@ def test_business_id_contains_no_pii():
 
 
 def test_concurrent_generation_never_duplicates():
-    """TUYET DOI khong duoc trung Business ID khi nhieu request chay dong thoi.
-    Day la ly do KHONG duoc dung SELECT MAX(id)+1.
-    """
+    # TUYET DOI khong duoc trung Business ID khi nhieu request chay dong thoi.
+    # Day la ly do KHONG duoc dung SELECT MAX(id)+1.
 
     def _generate_one(_):
         db = SessionLocal()

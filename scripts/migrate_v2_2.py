@@ -1,13 +1,12 @@
-"""Migration thu cong cho ATS v2.2 (khong co Alembic - xem Gap G-TECH-01).
-
-An toan: chi ADD COLUMN vao bang da co du lieu (candidates, applications),
-khong DROP/khong sua cot cu. Rieng bang `interviews` dang RONG hoan toan (0
-dong ca SQLite lan MySQL, da xac nhan truoc khi viet script nay) nen duoc
-DROP + tao lai qua create_all() thay vi ALTER - don gian hon ma khong mat gi.
-
-Chay: python -m scripts.migrate_v2_2
-Idempotent: kiem tra cot da ton tai truoc khi ALTER, chay lai nhieu lan an toan.
-"""
+# Migration thu cong so 2.2 cho ATS (khong co Alembic - xem Gap G-TECH-01).
+#
+# An toan: chi ADD COLUMN vao bang da co du lieu (candidates, applications),
+# khong DROP/khong sua cot cu. Rieng bang `interviews` dang RONG hoan toan (0
+# dong ca SQLite lan MySQL, da xac nhan truoc khi viet script nay) nen duoc
+# DROP + tao lai qua create_all() thay vi ALTER - don gian hon ma khong mat gi.
+#
+# Chay: python -m scripts.migrate_v2_2
+# Idempotent: kiem tra cot da ton tai truoc khi ALTER, chay lai nhieu lan an toan.
 
 from sqlalchemy import inspect, text
 
@@ -48,12 +47,7 @@ def run():
                 conn.execute(text("ALTER TABLE applications ADD COLUMN desired_salary NUMERIC(12,2)"))
                 print("[MIGRATE] applications.desired_salary da them")
 
-    # Backfill: Job Department = Application Department (Section 3) cho cac
-    # Application da ton tai truoc migration (chua co department_id).
     with engine.begin() as conn:
-        # Khong dung alias bang trong UPDATE (SQLite khong ho tro cu phap
-        # "UPDATE table alias SET ..." nhu MySQL) - dung ten bang truc tiep
-        # trong subquery de tuong thich ca 2 dialect.
         result = conn.execute(text(
             "UPDATE applications "
             "SET department_id = (SELECT j.department_id FROM jobs j WHERE j.id = applications.job_id) "
@@ -61,8 +55,7 @@ def run():
         ))
         print(f"[MIGRATE] Backfill department_id cho {result.rowcount} Application")
 
-    # --- interviews: rong hoan toan -> drop + tao lai voi schema moi (co
-    # end_time, interview_type) thay vi ALTER nhieu buoc.
+  
     if "interviews" in existing_tables:
         with engine.begin() as conn:
             count = conn.execute(text("SELECT COUNT(*) FROM interviews")).scalar()
@@ -72,15 +65,10 @@ def run():
         else:
             print(f"[MIGRATE CANH BAO] interviews co {count} dong, KHONG drop - can migration thu cong rieng")
 
-    # Tao cac bang moi (candidate_sources, password_reset_tokens, interviews
-    # neu vua drop) - create_all() bo qua bang da ton tai, an toan goi lai.
+
     Base.metadata.create_all(bind=engine)
     print("[MIGRATE] create_all() hoan tat - da tao cac bang con thieu.")
 
-    # MySQL (khac SQLite) tao cot Enum() thanh native ENUM(...) co san list gia
-    # tri co dinh luc tao bang - them EmailTemplateType.INTERVIEW_RESCHEDULED/
-    # INTERVIEW_CANCELLED/PASSWORD_RESET vao enums.py KHONG tu dong cap nhat
-    # ENUM da co san tren MySQL, phai ALTER MODIFY COLUMN thu cong.
     if engine.dialect.name == "mysql" and "email_templates" in existing_tables:
         all_values = ", ".join(f"'{v.value}'" for v in EmailTemplateType)
         with engine.begin() as conn:

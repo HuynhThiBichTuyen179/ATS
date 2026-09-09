@@ -16,11 +16,11 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True)
     business_id = Column(String(20), unique=True, nullable=False, index=True)
-    # v2 Phan 20.2 / changelog #24: slug cho URL public /jobs/{job-slug}
+    
     slug = Column(String(160), unique=True, nullable=True, index=True)
 
     title = Column(String(150), nullable=False)
-    # v2.3 Section 16/17: index - Public Job List loc theo department_id,
+    # Public Job List loc theo department_id,
     # publish/pipeline-filter loc theo status thuong xuyen.
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=False, index=True)
     description = Column(Text, nullable=False)

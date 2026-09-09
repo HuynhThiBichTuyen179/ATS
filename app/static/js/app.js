@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ATS v2.1 — Frontend Application Logic & API Client
+   ATS — Frontend Application Logic & API Client
    ========================================================================== */
 
 const API_BASE = ""; // Relative to same origin (e.g. http://127.0.0.1:8000)
@@ -230,7 +230,7 @@ function openApplyModal(jobBusinessId, jobTitle) {
   document.getElementById("apply-name").value = state.currentUser.full_name || "";
   document.getElementById("apply-email").value = state.currentUser.email || "";
   
-  // Auto-generate unique Idempotency Key for CHANGE 02
+  // Auto-generate unique Idempotency Key
   const idempotencyKey = "IK-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
   document.getElementById("apply-idempotency-key").value = idempotencyKey;
 
@@ -422,7 +422,7 @@ function renderKanbanBoard(apps) {
   }).join("");
 }
 
-// Application & Offer Approval Modal (Focusing on CHANGE 01: 4-Eyes Approval)
+// Application & Offer Approval Modal (4-Eyes Approval)
 async function openApplicationDetailModal(appBusinessId) {
   const modal = document.getElementById("app-detail-modal");
   document.getElementById("modal-app-id").textContent = appBusinessId;
@@ -459,7 +459,7 @@ async function openApplicationDetailModal(appBusinessId) {
 
       <hr style="border-color: var(--border-color); margin: 1.5rem 0;" />
 
-      <h4 style="margin-bottom: 1rem;"><i class="fas fa-file-signature" style="color:var(--primary);"></i> Quản Lý Offer (CHANGE 01 - Phê Duyệt 4 Mắt)</h4>
+      <h4 style="margin-bottom: 1rem;"><i class="fas fa-file-signature" style="color:var(--primary);"></i> Quản Lý Offer (Phê Duyệt 4 Mắt)</h4>
       
       <div id="offer-management-section">
         <button class="btn" onclick="openCreateOfferForm('${app.business_id}')">
@@ -561,13 +561,13 @@ function renderOfferDetailView(offer) {
         <div>Lương chính thức: <b>${offer.salary.toLocaleString()} VND</b></div>
       </div>
 
-      <!-- CHANGE 01 Visual Guard Indicator -->
+      <!-- Visual Guard Indicator -->
       ${offer.status === 'PENDING_APPROVAL' ? (
         isCreator ? `
           <div class="offer-guard-alert blocked">
             <i class="fas fa-lock fa-lg"></i>
             <div>
-              <b>🔒 QUY TẮC 4 MẮT (CHANGE 01): BỊ KHÓA</b><br/>
+              <b>🔒 QUY TẮC 4 MẮT: BỊ KHÓA</b><br/>
               Bạn là <b>người tạo Offer này</b> (${offer.creator_business_id}). Hệ thống chặn không cho bạn tự duyệt Offer của chính mình!
             </div>
           </div>

@@ -1,8 +1,8 @@
-"""AI Screening - BO HOAN TOAN che do STUB theo yeu cau nguoi dung (chi phan
-tich bang AI Provider that qua AI_API_KEY, khong con fallback ve du lieu gia).
-AI_API_KEY luon rong trong test env (conftest.py) nen phan lon test monkeypatch
-truc tiep app.services.ai_service._call_ai_provider/_is_ai_configured de mo
-phong 1 lan goi AI that thanh cong hoac that bai, thay vi phu thuoc network that."""
+# AI Screening - chi phan tich bang AI Provider that qua AI_API_KEY, khong co
+# fallback ve du lieu gia. AI_API_KEY luon rong trong test env (conftest.py)
+# nen phan lon test monkeypatch truc tiep
+# app.services.ai_service._call_ai_provider/_is_ai_configured de mo phong 1
+# lan goi AI thanh cong hoac that bai, thay vi phu thuoc network that.
 
 from tests.conftest import auth_headers, register_and_login_candidate
 
@@ -33,8 +33,8 @@ _FAKE_AI_RESULT = {
 
 
 def test_ai_analyze_without_api_key_returns_clear_error(client, seed):
-    """AI_API_KEY rong trong test env (conftest.py) -> phai bao loi 400 RO
-    RANG (khong con am tham chay STUB tra 200 nhu truoc)."""
+    # AI_API_KEY rong trong test env (conftest.py) -> phai bao loi 400 RO
+    # RANG (khong con am tham chay STUB tra 200 nhu truoc).
     app_id = _apply_with_resume(client, seed, "uv-ai-noconfig@example.com")
     hr_headers = auth_headers(client, seed["hr"]["email"])
 
@@ -48,10 +48,10 @@ def test_ai_analyze_without_api_key_returns_clear_error(client, seed):
 
 
 def test_ai_analyze_success_creates_analysis_and_advances_status(client, seed, monkeypatch):
-    """Mo phong 1 lan goi AI Provider THAT thanh cong (AI_API_KEY test env
-    rong nen phai monkeypatch ca _is_ai_configured lan _call_ai_provider) -
-    xac nhan toan bo pipeline: tao ai_analyses tu ket qua that (khong phai
-    stub), cap nhat match_score, chuyen trang thai, is_latest."""
+    # Mo phong 1 lan goi AI Provider THAT thanh cong (AI_API_KEY test env
+    # rong nen phai monkeypatch ca _is_ai_configured lan _call_ai_provider) -
+    # xac nhan toan bo pipeline: tao ai_analyses tu ket qua that (khong phai
+    # stub), cap nhat match_score, chuyen trang thai, is_latest.
     from app.services import ai_service
 
     monkeypatch.setattr(ai_service, "_is_ai_configured", lambda: True)
@@ -76,10 +76,10 @@ def test_ai_analyze_success_creates_analysis_and_advances_status(client, seed, m
 
 
 def test_ai_provider_fails_after_retries_returns_specific_error(client, seed, monkeypatch, db):
-    """AI_API_KEY CO cau hinh nhung provider luon that bai (VD het quota) ->
-    phai thu du 3 lan (co delay, bo qua trong test) roi tra loi 502 voi thong
-    bao CU THE (khong con fallback ve du lieu gia nhu truoc). Gia lap dung
-    tinh huong 429 da xac nhan qua test that voi Gemini."""
+    # AI_API_KEY CO cau hinh nhung provider luon that bai (VD het quota) ->
+    # phai thu du 3 lan (co delay, bo qua trong test) roi tra loi 502 voi
+    # thong bao CU THE. Gia lap dung tinh huong 429 da xac nhan qua test
+    # that voi Gemini.
     from app.services import ai_service
 
     monkeypatch.setattr(ai_service, "_is_ai_configured", lambda: True)
@@ -116,9 +116,9 @@ def test_ai_provider_fails_after_retries_returns_specific_error(client, seed, mo
 
 
 def test_classify_ai_error_maps_known_status_codes():
-    """Unit test thuan cho _classify_ai_error - khong can DB/HTTP, chi kiem
-    tra dung nhan dien 429 (het quota) khac voi 401/403 (sai key) khac voi
-    503 (qua tai) - 3 nguyen nhan can loi khac han nhau cho nguoi dung."""
+    # Unit test thuan cho _classify_ai_error - khong can DB/HTTP, chi kiem
+    # tra dung nhan dien 429 (het quota) khac voi 401/403 (sai key) khac voi
+    # 503 (qua tai) - 3 nguyen nhan can loi khac han nhau cho nguoi dung.
     from app.services.ai_service import _classify_ai_error
 
     assert "quota" in _classify_ai_error("HTTP 429: quota exceeded").lower()

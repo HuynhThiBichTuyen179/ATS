@@ -37,7 +37,7 @@ def decode_access_token(token: str) -> dict | None:
 
 
 def generate_refresh_token() -> tuple[str, str, datetime]:
-    """Tra ve (plaintext_token, hash_de_luu_db, expires_at). Chi hash duoc luu DB."""
+    # Tra ve (plaintext_token, hash_de_luu_db, expires_at). Chi hash duoc luu DB.
     raw = secrets.token_urlsafe(48)
     token_hash = hashlib.sha256(raw.encode()).hexdigest()
     expires_at = datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_token_days)
@@ -49,9 +49,9 @@ def hash_refresh_token(raw: str) -> str:
 
 
 def generate_password_reset_token() -> tuple[str, str, datetime]:
-    """v2.2 Section 23 - token random (khong doan duoc tu user_id/email/DOB),
-    chi hash (SHA-256) duoc luu DB, co han (mac dinh 30 phut). Cung nguyen tac
-    da dung cho refresh_token o tren."""
+    # Token random (khong doan duoc tu user_id/email/DOB), chi hash (SHA-256)
+    # duoc luu DB, co han (mac dinh 30 phut). Cung nguyen tac da dung cho
+    # refresh_token o tren.
     raw = secrets.token_urlsafe(48)
     token_hash = hashlib.sha256(raw.encode()).hexdigest()
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.password_reset_token_expiry_minutes)

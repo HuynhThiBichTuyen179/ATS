@@ -1,6 +1,5 @@
-"""CHANGE 02 - Re-apply khong con gioi han 90 ngay; Idempotency chong duplicate
-submit, khong duoc chan re-apply hop le.
-"""
+# Re-apply khong gioi han 90 ngay; Idempotency chong duplicate submit, khong
+# duoc chan re-apply hop le.
 
 from tests.conftest import auth_headers, register_and_login_candidate
 
@@ -32,8 +31,8 @@ def test_application_business_id_has_app_prefix(client, seed):
 
 
 def test_reapply_immediately_after_rejection_is_allowed(client, db, seed):
-    """Khong con cooldown 90 ngay: Candidate bi REJECTED co the Apply lai NGAY,
-    khong can cho."""
+    # Khong con cooldown 90 ngay: Candidate bi REJECTED co the Apply lai NGAY,
+    # khong can cho.
     cand_headers = register_and_login_candidate(client, "uv2@example.com")
     resp1 = _apply(client, cand_headers, seed["job_business_id"], seed["source_business_id"], idem_key="req-1", email="uv2@example.com")
     assert resp1.status_code == 200, resp1.text
@@ -78,9 +77,9 @@ def test_duplicate_idempotency_key_does_not_create_new_application(client, seed)
 
 
 def test_reapply_blocked_while_active_application_in_screening(client, db, seed):
-    """BUG FIX (theo yeu cau nguoi dung): Candidate KHONG duoc nop THEM ho so
-    vao cung 1 Job neu ho so truoc do da qua buoc sang loc (SCREENING tro di)
-    va chua ket thuc - tranh 2 ho so trung nhau cung duoc xu ly song song."""
+    # Candidate KHONG duoc nop THEM ho so vao cung 1 Job neu ho so truoc do
+    # da qua buoc sang loc (SCREENING tro di) va chua ket thuc - tranh 2 ho
+    # so trung nhau cung duoc xu ly song song.
     cand_headers = register_and_login_candidate(client, "uv5@example.com")
     resp1 = _apply(client, cand_headers, seed["job_business_id"], seed["source_business_id"], idem_key="scr-1", email="uv5@example.com")
     assert resp1.status_code == 200, resp1.text
@@ -99,8 +98,8 @@ def test_reapply_blocked_while_active_application_in_screening(client, db, seed)
 
 
 def test_reapply_still_allowed_while_previous_still_new(client, seed):
-    """Ho so cu con o NEW (chua qua sang loc) - van cho nop them binh thuong,
-    dung tinh than tai ung tuyen khong gioi han (CHANGE 02)."""
+    # Ho so cu con o NEW (chua qua sang loc) - van cho nop them binh thuong,
+    # dung tinh than tai ung tuyen khong gioi han.
     cand_headers = register_and_login_candidate(client, "uv6@example.com")
     resp1 = _apply(client, cand_headers, seed["job_business_id"], seed["source_business_id"], idem_key="new-1", email="uv6@example.com")
     assert resp1.status_code == 200, resp1.text

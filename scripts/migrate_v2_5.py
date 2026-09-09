@@ -1,18 +1,18 @@
-"""Migration thu cong cho ATS v2.5 (tiep noi migrate_v2_2/v2_3/v2_4 - khong co Alembic).
-
-BUG FIX: 4 cot cua bang `candidates` (address, current_salary, expected_salary,
-date_of_birth) chua bao gio duoc bat ky schema/router nao doc hoac ghi - khong
-xuat hien trong CandidateCreateRequest/CandidateUpdateRequest/CandidateOut,
-khong co endpoint nao gan gia tri. Da kiem tra truc tiep tren MySQL dev truoc
-khi viet script nay: ca 4 bang deu 100% NULL o toan bo ban ghi hien co (4/4),
-nen xoa an toan, khong mat du lieu that. "Luong mong muon" hien thi that tren
-giao dien lay tu `applications.desired_salary` (bang khac), khong phai
-`candidates.expected_salary` - de ten gan giong nhau gay nham lan.
-
-An toan: chi DROP COLUMN cac cot da xac nhan rong, khong dong toi du lieu
-khac. Chay: python -m scripts.migrate_v2_5
-Idempotent: kiem tra cot con ton tai truoc khi DROP, chay lai nhieu lan an toan.
-"""
+# Migration thu cong so 2.5 cho ATS (tiep noi migrate_v2_2/v2_3/v2_4 - khong co Alembic).
+#
+# 4 cot cua bang `candidates` (address, current_salary, expected_salary,
+# date_of_birth) chua bao gio duoc bat ky schema/router nao doc hoac ghi -
+# khong xuat hien trong CandidateCreateRequest/CandidateUpdateRequest/
+# CandidateOut, khong co endpoint nao gan gia tri. Da kiem tra truc tiep tren
+# MySQL dev truoc khi viet script nay: ca 4 cot deu 100% NULL o toan bo ban
+# ghi hien co, nen xoa an toan, khong mat du lieu that. "Luong mong muon"
+# hien thi that tren giao dien lay tu `applications.desired_salary` (bang
+# khac), khong phai `candidates.expected_salary` - de ten gan giong nhau gay
+# nham lan.
+#
+# An toan: chi DROP COLUMN cac cot da xac nhan rong, khong dong toi du lieu
+# khac. Chay: python -m scripts.migrate_v2_5
+# Idempotent: kiem tra cot con ton tai truoc khi DROP, chay lai nhieu lan an toan.
 
 from sqlalchemy import inspect, text
 

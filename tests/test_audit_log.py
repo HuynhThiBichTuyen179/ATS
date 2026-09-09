@@ -1,5 +1,4 @@
-"""GET /audit-logs - chi ADMIN (BGD) duoc xem, theo yeu cau nguoi dung thu hep
-tu HR_MANAGER+ADMIN xuong chi ADMIN."""
+# GET /audit-logs - chi ADMIN duoc xem.
 
 from tests.conftest import auth_headers
 

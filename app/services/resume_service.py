@@ -9,10 +9,9 @@ from app.services import audit_service, resume_parser
 
 
 async def upload_resume_file(db: Session, application: Application, file: UploadFile, actor: User) -> Resume:
-    """1 Resume/1 Application (v2 changelog #13) - neu da co resume (vi du tu
-    luc dan text CV o Apply), file upload GHI DE len ban ghi do thay vi tao
-    moi, giu nguyen business_id cu.
-    """
+    # 1 Resume/1 Application - neu da co resume (vi du tu luc dan text CV o
+    # Apply), file upload GHI DE len ban ghi do thay vi tao moi, giu nguyen
+    # business_id cu.
     file_name, file_path, file_type, extracted_text = await resume_parser.save_and_extract(
         file, application.business_id
     )

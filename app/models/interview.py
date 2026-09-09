@@ -20,8 +20,8 @@ class Interview(Base):
     application_id = Column(Integer, ForeignKey("applications.id"), nullable=False)
     interviewer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    # scheduled_at = gio bat dau (start_time). v2.2 bo sung end_time de kiem
-    # tra conflict (Section 32: Start < End, trung lich Candidate/Interviewer).
+   
+    # tra conflict (Start < End, trung lich Candidate/Interviewer
     scheduled_at = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     interview_type = Column(Enum(InterviewType), nullable=False, default=InterviewType.ONLINE)

@@ -1,16 +1,15 @@
-"""Migration thu cong cho ATS v2.6 (tiep noi migrate_v2_2..v2_5 - khong co Alembic).
-
-BUG FIX: 5 cot cua bang `interviews` (rating, feedback, hiring_manager_name,
-hiring_manager_email, hiring_manager_feedback) chua bao gio duoc bat ky
-schema/router/service/frontend nao doc hoac ghi - khong xuat hien trong
-InterviewCreateRequest/InterviewUpdateRequest/InterviewOut. Da kiem tra truc
-tiep tren MySQL dev truoc khi viet script nay: ca 5 cot deu 100% NULL o toan
-bo 3 ban ghi hien co, nen xoa an toan, khong mat du lieu that.
-
-An toan: chi DROP COLUMN cac cot da xac nhan rong, khong dong toi du lieu
-khac. Chay: python -m scripts.migrate_v2_6
-Idempotent: kiem tra cot con ton tai truoc khi DROP, chay lai nhieu lan an toan.
-"""
+# Migration thu cong so 2.6 cho ATS (tiep noi migrate_v2_2..v2_5 - khong co Alembic).
+#
+# 5 cot cua bang `interviews` (rating, feedback, hiring_manager_name,
+# hiring_manager_email, hiring_manager_feedback) chua bao gio duoc bat ky
+# schema/router/service/frontend nao doc hoac ghi - khong xuat hien trong
+# InterviewCreateRequest/InterviewUpdateRequest/InterviewOut. Da kiem tra
+# truc tiep tren MySQL dev truoc khi viet script nay: ca 5 cot deu 100% NULL
+# o toan bo ban ghi hien co, nen xoa an toan, khong mat du lieu that.
+#
+# An toan: chi DROP COLUMN cac cot da xac nhan rong, khong dong toi du lieu
+# khac. Chay: python -m scripts.migrate_v2_6
+# Idempotent: kiem tra cot con ton tai truoc khi DROP, chay lai nhieu lan an toan.
 
 from sqlalchemy import inspect, text
 

@@ -47,10 +47,9 @@ def _get_offer(db: Session, business_id: str) -> Offer:
 
 
 def _check_can_view_offer(current_user: User, offer: Offer) -> None:
-    """Ownership/scope check con thieu o GET /offers/{id} (phat hien khi doi
-    chieu code voi spec 4.2/4.3) - khong co check nay, bat ky user dang nhap
-    nao cung doc duoc luong cua offer bat ky vi business_id tuan tu de doan.
-    """
+    # Ownership/scope check cho GET /offers/{id} - khong co check nay, bat ky
+    # user dang nhap nao cung doc duoc offer bat ky vi business_id tuan tu de
+    # doan.
     if current_user.role in (UserRole.HR_MANAGER, UserRole.ADMIN):
         return
     if current_user.role == UserRole.HR:
@@ -71,9 +70,8 @@ def list_offers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Can thiet de HR Manager/Admin tim Offer dang PENDING_APPROVAL can duyet,
-    va de Candidate xem Offer cua chinh minh gan voi 1 Application cu the.
-    """
+    # Can thiet de HR Manager/Admin tim Offer dang PENDING_APPROVAL can duyet,
+    # va de Candidate xem Offer cua chinh minh gan voi 1 Application cu the.
     query = db.query(Offer)
 
     if application_business_id:

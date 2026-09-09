@@ -4,9 +4,8 @@ from app.core.database import Base
 
 
 class IDSequence(Base):
-    """Bo dem rieng cho tung entity_type, dung de sinh Business ID
-    (vd USR0001, JOB0001) an toan voi concurrency. Xem app/core/id_generator.py.
-    """
+    #Bo dem rieng cho tung entity_type, dung de sinh Business ID
+    #(vd USR0001, JOB0001) an toan voi concurrency.
 
     __tablename__ = "id_sequences"
 

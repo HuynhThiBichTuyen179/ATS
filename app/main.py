@@ -30,8 +30,6 @@ import app.models  # noqa: F401
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # v2 Phan 17 backlog: thay bang Alembic migration truoc khi len production.
-    # create_all du dung cho dev/test hien tai.
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -68,7 +66,7 @@ app.include_router(candidate_sources.router)
 app.include_router(resumes.router)
 app.include_router(interview.router)
 
-# Mount static files UI for Frontend v2
+
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -81,7 +79,7 @@ def serve_index():
 
 @app.get("/reset-password", include_in_schema=False)
 def serve_reset_password_page():
-    # Section 22: link trong email Forgot Password tro ve day (xem
+    # link trong email Forgot Password tro ve day (xem
     # password_reset_service.py). SPA tu doc "?token=" tren URL va mo modal
     # dat lai mat khau (xem autoOpenResetPasswordFromUrl() trong index.html).
     return FileResponse(os.path.join(static_dir, "index.html"))

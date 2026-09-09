@@ -19,10 +19,9 @@ class UserCreateRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    """Section 13/14 - sua thong tin HR/HR_MANAGER/ADMIN. Khong cho sua qua
-    day: password (co endpoint doi mat khau rieng qua reset flow), role doi
-    tuy tien khong nam trong scope dot nay (giu nguyen RBAC tao-role hien co
-    o create_user), business_id/created_at bat bien."""
+    # Sua thong tin HR/HR_MANAGER/ADMIN. Khong cho sua qua day: password (co
+    # endpoint doi mat khau rieng qua reset flow), role (giu nguyen RBAC
+    # tao-role hien co o create_user), business_id/created_at bat bien.
 
     full_name: str | None = None
     phone: str | None = None

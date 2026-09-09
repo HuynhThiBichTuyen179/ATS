@@ -1,7 +1,6 @@
-"""E2E cho cac tinh nang moi: Dashboard, Upload CV that (DOCX), AI Screening
-(stub mode), Email Template + gui thu cong + tu dong theo giai doan, filter/
-search. Chay: python scripts/smoke_new_features.py (server phai dang chay
-tren :8123)."""
+# E2E cho cac tinh nang moi: Dashboard, Upload CV that (DOCX), AI Screening,
+# Email Template + gui thu cong + tu dong theo giai doan, filter/search.
+# Chay: python scripts/smoke_new_features.py (server phai dang chay tren :8123).
 
 import io
 import sys

@@ -79,10 +79,9 @@ def submit_offer(db: Session, offer: Offer, actor: User) -> Offer:
 
 
 def approve_offer(db: Session, offer: Offer, actor: User) -> Offer:
-    """CHANGE 01 - trai tim cua 4-eyes approval. creator_id != approver_id la
-    business invariant BAT BUOC, enforce o day (service layer) va o DB qua
-    CheckConstraint ck_offer_approver_not_creator (xem app/models/offer.py).
-    """
+    # Trai tim cua 4-eyes approval. creator_id != approver_id la business
+    # invariant BAT BUOC, enforce o day (service layer) va o DB qua
+    # CheckConstraint ck_offer_approver_not_creator (xem app/models/offer.py).
     if actor.role not in (UserRole.HR_MANAGER, UserRole.ADMIN):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "INSUFFICIENT_PERMISSION")
     if offer.status != OfferStatus.PENDING_APPROVAL:
@@ -127,8 +126,8 @@ def reject_offer(db: Session, offer: Offer, actor: User, reason: str) -> Offer:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "REJECTION_REASON_REQUIRED")
 
     before = _to_dict(offer)
-    # PENDING_APPROVAL -> DRAFT (khong phai trang thai terminal): creator sua va
-    # submit lai duoc, dung nhu CHANGE 01 muc "Reject".
+    # PENDING_APPROVAL -> DRAFT (khong phai trang thai terminal): creator sua
+    # va submit lai duoc.
     offer.status = OfferStatus.DRAFT
     offer.approver_id = actor.id
     offer.rejected_at = datetime.now(timezone.utc)
@@ -220,7 +219,7 @@ def respond_offer(db: Session, offer: Offer, actor: User, accept: bool) -> Offer
     db.refresh(offer)
 
     if accept:
-        # v2 Phan 9: ONBOARDING gui khi Candidate Accept Offer (Application HIRED)
+        # ONBOARDING gui khi Candidate Accept Offer (Application HIRED)
         email_service.trigger_stage_email(
             db, actor, application, EmailTemplateType.ONBOARDING,
             extra_vars={"start_date": offer.start_date.isoformat()},
@@ -229,10 +228,7 @@ def respond_offer(db: Session, offer: Offer, actor: User, accept: bool) -> Offer
 
 
 def _close_job_if_quota_reached(db: Session, application: Application, actor: User) -> None:
-    """Rule 2 (v2 Phan 12): du so luong HIRED >= jobs.quantity thi tu dong
-    dong Job. Phat hien thieu khi doi chieu code voi spec - chua tung duoc
-    goi o dau ca truoc ban vá nay.
-    """
+    # Du so luong HIRED >= jobs.quantity thi tu dong dong Job.
     job = db.get(Job, application.job_id)
     hired_count = (
         db.query(Application)
@@ -256,9 +252,8 @@ def _close_job_if_quota_reached(db: Session, application: Application, actor: Us
 
 
 def expire_due_offers(db: Session, system_actor: User) -> list[Offer]:
-    """Scheduler job (v2 Phan 7.4, Rule 7): offer SENT qua expires_at -> EXPIRED,
-    application tuong ung -> REJECTED.
-    """
+    # Scheduler job: offer SENT qua expires_at -> EXPIRED, application tuong
+    # ung -> REJECTED.
     now = datetime.now(timezone.utc)
     due = (
         db.query(Offer)

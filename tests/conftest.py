@@ -41,11 +41,11 @@ from app.models.user import User  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def _fake_smtp(monkeypatch):
-    """email_service.py khong con che do gia lap rieng - luon thu goi SMTP
-    that. Trong test, tu gia lap ket qua gui thanh cong tai day (khong dung
-    het thoi gian cho ket noi SMTP that/that bai xac thuc that ~15 giay moi
-    lan goi), thay vi de production code phai tu biet no "dang chay trong
-    test" - danh dau ro rang trong status_message de phan biet voi gui that."""
+    # email_service.py khong con che do gia lap rieng - luon thu goi SMTP
+    # that. Trong test, tu gia lap ket qua gui thanh cong tai day (khong dung
+    # het thoi gian cho ket noi SMTP that/that bai xac thuc that ~15 giay moi
+    # lan goi), thay vi de production code phai tu biet no "dang chay trong
+    # test" - danh dau ro rang trong status_message de phan biet voi gui that.
     from app.services import email_service
 
     def _fake_send_raw_email(to_email: str, subject: str, body: str) -> tuple[bool, str]:
@@ -56,9 +56,8 @@ def _fake_smtp(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _reset_db():
-    """Reset toan bo DB truoc MOI test de dam bao cach ly hoan toan (bao gom
-    ca bo dem id_sequences) - tranh test truoc anh huong test sau.
-    """
+    # Reset toan bo DB truoc MOI test de dam bao cach ly hoan toan (bao gom
+    # ca bo dem id_sequences) - tranh test truoc anh huong test sau.
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
@@ -80,10 +79,9 @@ def db():
 
 @pytest.fixture()
 def seed(db):
-    """Tao du lieu toi thieu: 1 department, 1 admin, 2 hr_manager, 1 hr, 1 job
-    PUBLISHED. Tra ve dict chua business_id + password moi user de dang nhap
-    qua API trong test.
-    """
+    # Tao du lieu toi thieu: 1 department, 1 admin, 2 hr_manager, 1 hr, 1 job
+    # PUBLISHED. Tra ve dict chua business_id + password moi user de dang
+    # nhap qua API trong test.
     dept = Department(business_id=generate_business_id(db, "department"), name="Cong nghe thong tin")
     db.add(dept)
     db.flush()
@@ -102,7 +100,7 @@ def seed(db):
         db.flush()
         return u
 
-    admin = make_user(UserRole.ADMIN, "admin@example.com", "Admin BGD")
+    admin = make_user(UserRole.ADMIN, "admin@example.com", "Admin")
     hrm_a = make_user(UserRole.HR_MANAGER, "hrm.a@example.com", "HR Manager A")
     hrm_b = make_user(UserRole.HR_MANAGER, "hrm.b@example.com", "HR Manager B")
     hr = make_user(UserRole.HR, "hr.a@example.com", "HR Nguyen Van A")
@@ -125,9 +123,9 @@ def seed(db):
     )
     db.add(job)
 
-    # v2.3 Section 9: Candidate Apply bat buoc chon Candidate Source - seed
-    # san 1 source ACTIVE de cac test hien co (va test moi) dung lam gia tri
-    # hop le mac dinh, khong can moi test tu tao rieng.
+    # Candidate Apply bat buoc chon Candidate Source - seed san 1 source
+    # ACTIVE de cac test dung lam gia tri hop le mac dinh, khong can moi test
+    # tu tao rieng.
     source = CandidateSource(business_id=generate_business_id(db, "candidate_source"), name="Website")
     db.add(source)
     db.commit()

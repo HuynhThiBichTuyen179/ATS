@@ -59,7 +59,7 @@ class InterviewType(str, enum.Enum):
     ONLINE = "ONLINE"
 
 
-# v2.2: soft-delete cho Candidate (khong co field status truoc do) - ARCHIVED
+# soft-delete cho Candidate (khong co field status truoc do) - ARCHIVED
 # thay cho xoa vat ly, giu nguyen lich su Application/Interview/Offer/AI lien quan.
 class CandidateStatus(str, enum.Enum):
     ACTIVE = "ACTIVE"
@@ -71,9 +71,9 @@ class CandidateSourceStatus(str, enum.Enum):
     INACTIVE = "INACTIVE"
 
 
-# CHANGE 01: Offer.status bo gia tri REJECTED cu (bi trung nghia voi "tu choi luc
-# duyet" - nay chi con la buoc PENDING_APPROVAL -> DRAFT, khong terminal). Trang
-# thai Candidate tu choi Offer doi ten thanh DECLINED de tranh nham lan.
+# Offer.status khong co gia tri REJECTED (bi trung nghia voi "tu choi luc duyet"
+# - nay chi con la buoc PENDING_APPROVAL -> DRAFT, khong terminal). Trang thai
+# Candidate tu choi Offer dat ten la DECLINED de tranh nham lan.
 class OfferStatus(str, enum.Enum):
     DRAFT = "DRAFT"
     PENDING_APPROVAL = "PENDING_APPROVAL"
@@ -89,8 +89,8 @@ class EmailTemplateType(str, enum.Enum):
     SHORTLISTED = "SHORTLISTED"
     INTERVIEW_INVITATION = "INTERVIEW_INVITATION"
     INTERVIEW_REMINDER = "INTERVIEW_REMINDER"
-    # v2.2 Section 34: them 2 su kien rieng cho Interview Calendar (truoc chi
-    # co INTERVIEW_INVITATION luc tao lich, khong phan biet duoc doi lich vs huy).
+    # 2 su kien rieng cho Interview Calendar (khac INTERVIEW_INVITATION luc tao
+    # lich, dung de phan biet doi lich vs huy).
     INTERVIEW_RESCHEDULED = "INTERVIEW_RESCHEDULED"
     INTERVIEW_CANCELLED = "INTERVIEW_CANCELLED"
     REJECTION = "REJECTION"

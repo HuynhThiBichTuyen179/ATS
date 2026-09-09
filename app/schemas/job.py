@@ -23,9 +23,9 @@ class AssignHrRequest(BaseModel):
 
 
 class JobUpdateRequest(BaseModel):
-    """Sua tin tuyen dung - cho phep bat ke Job dang DRAFT hay da PUBLISHED
-    (theo yeu cau nguoi dung). Khong cho doi department/status/assigned_hr qua
-    day - da co route rieng (/assign-hr, /publish) tranh lam vo quy trinh."""
+    # Sua tin tuyen dung - cho phep bat ke Job dang DRAFT hay da PUBLISHED.
+    # Khong cho doi department/status/assigned_hr qua day - da co route rieng
+    # (/assign-hr, /publish) tranh lam vo quy trinh.
 
     title: str | None = None
     description: str | None = None

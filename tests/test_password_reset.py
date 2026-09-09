@@ -1,13 +1,13 @@
-"""v2.2 Section 22-25/47 - Forgot/Reset Password."""
+# Forgot/Reset Password.
 
 from app.models.password_reset_token import PasswordResetToken
 from tests.conftest import register_and_login_candidate
 
 
 def _get_raw_token_for_latest_request(monkeypatch_capture=None):
-    """Test khong the doc raw token tu response (dung theo Section 24 - khong
-    leak thong tin qua API). Doc truc tiep tu DB bang cach patch security de
-    lay raw token that trong luc test, giu nguyen hanh vi san xuat."""
+    # Test khong the doc raw token tu response (khong leak thong tin qua
+    # API). Doc truc tiep tu DB bang cach patch security de lay raw token
+    # that trong luc test, giu nguyen hanh vi san xuat.
     pass
 
 
@@ -92,12 +92,12 @@ def test_reset_password_weak_password_rejected(client, seed):
 
 
 def test_seed_data_includes_password_reset_template():
-    """BUG FIX: truoc day DEMO_EMAIL_TEMPLATES (app/seed_data.py) khong co
-    loai PASSWORD_RESET nao ca -> request_password_reset() luon tim thay
-    template=None va return som, khong bao gio thuc su goi send_email() (xem
-    'if not template: return' trong password_reset_service.py) - forgot
-    password luon phan hoi 'thanh cong' nhung KHONG GUI EMAIL NAO CA. Test
-    nay khoa lai: danh sach seed BAT BUOC phai co 1 mau PASSWORD_RESET."""
+    # Neu DEMO_EMAIL_TEMPLATES (app/seed_data.py) khong co loai PASSWORD_RESET
+    # nao, request_password_reset() se luon tim thay template=None va return
+    # som, khong bao gio thuc su goi send_email() (xem 'if not template: return'
+    # trong password_reset_service.py) - forgot password se luon phan hoi
+    # "thanh cong" nhung KHONG GUI EMAIL NAO CA. Test nay khoa lai: danh sach
+    # seed BAT BUOC phai co 1 mau PASSWORD_RESET.
     from app.models.enums import EmailTemplateType
     from app.seed_data import DEMO_EMAIL_TEMPLATES
 
@@ -106,9 +106,9 @@ def test_seed_data_includes_password_reset_template():
 
 
 def test_forgot_password_actually_attempts_send_when_template_exists(client, seed, db):
-    """Neu co mau PASSWORD_RESET ACTIVE, request_password_reset() phai thuc
-    su goi toi email_service.send_email() (ghi 1 dong audit_log EMAIL_SENT
-    hoac EMAIL_FAILED) thay vi im lang bo qua."""
+    # Neu co mau PASSWORD_RESET ACTIVE, request_password_reset() phai thuc
+    # su goi toi email_service.send_email() (ghi 1 dong audit_log EMAIL_SENT
+    # hoac EMAIL_FAILED) thay vi im lang bo qua.
     from app.core.id_generator import generate_business_id
     from app.models.audit_log import AuditLog
     from app.models.email_template import EmailTemplate

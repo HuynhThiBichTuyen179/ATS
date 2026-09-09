@@ -1,8 +1,6 @@
-"""Kiem tra rieng cac fix tu dot audit code-vs-spec: (1) GET /offers/{id} phai
-chan candidate khac; (2) assign-hr endpoint; (3) archive endpoint; (4) Rule 2
-tu dong dong Job khi du quota. Chay: python scripts/smoke_audit_fixes.py
-(server phai dang chay tren :8123).
-"""
+# Kiem tra rieng: (1) GET /offers/{id} phai chan candidate khac; (2) assign-hr
+# endpoint; (3) archive endpoint; (4) tu dong dong Job khi du quota. Chay:
+# python scripts/smoke_audit_fixes.py (server phai dang chay tren :8123).
 
 import sys
 import uuid

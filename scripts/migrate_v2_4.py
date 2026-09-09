@@ -1,29 +1,23 @@
-"""Migration thu cong cho ATS v2.4 (tiep noi migrate_v2_2.py/migrate_v2_3.py -
-khong co Alembic).
-
-BUG FIX: migrate_v2_2.py them cot `applications.department_id` va
-migrate_v2_3.py them cot `applications.source_id` bang `ALTER TABLE ... ADD
-COLUMN` thuan - KHONG kem `ADD CONSTRAINT ... FOREIGN KEY`. Model
-(app/models/application.py) khai bao ca 2 cot nay la ForeignKey() tu dau,
-nhung `Base.metadata.create_all()` CHI tao constraint cho bang/cot con thieu
-luc khoi dong lan dau, KHONG tu dong ALTER them constraint cho cot da ton tai
-tren bang da co du lieu - nen 2 khoa ngoai nay chua bao gio thuc su duoc tao
-tren MySQL dev/production dang chay, du code Python van "tin" la co.
-
-Hau qua thuc te da phat hien: cong cu reverse-engineer schema (MySQL
-Workbench, dbdiagram...) chi ve duong noi dua tren constraint FK THAT trong
-DB, khong doc duoc code Python - nen bang `candidate_sources` hien ra "roi
-rac", khong noi voi bang nao, gay nham lan la thiet ke sai quan he du quan
-he van dung trong code/ORM.
-
-An toan: chi ADD CONSTRAINT, khong DROP/khong mat du lieu. Da kiem tra truoc
-khi viet script nay: 0 ban ghi `applications.source_id`/`department_id` mo coi
-(khong khop ban ghi cha) tren du lieu dev hien tai, nen ADD CONSTRAINT chac
-chan khong bi MySQL tu choi.
-
-Chay: python -m scripts.migrate_v2_4
-Idempotent: kiem tra constraint da ton tai truoc khi ALTER, chay lai nhieu lan an toan.
-"""
+# Migration thu cong so 2.4 cho ATS (tiep noi migrate_v2_2.py/migrate_v2_3.py -
+# khong co Alembic).
+#
+# migrate_v2_2.py them cot `applications.department_id` va migrate_v2_3.py
+# them cot `applications.source_id` bang `ALTER TABLE ... ADD COLUMN` thuan -
+# KHONG kem `ADD CONSTRAINT ... FOREIGN KEY`. Model (app/models/application.py)
+# khai bao ca 2 cot nay la ForeignKey() tu dau, nhung
+# `Base.metadata.create_all()` CHI tao constraint cho bang/cot con thieu luc
+# khoi dong lan dau, KHONG tu dong ALTER them constraint cho cot da ton tai
+# tren bang da co du lieu - nen 2 khoa ngoai nay chua bao gio thuc su duoc
+# tao tren MySQL dev/production dang chay, du code Python van "tin" la co.
+# Script nay bo sung 2 constraint FK con thieu do.
+#
+# An toan: chi ADD CONSTRAINT, khong DROP/khong mat du lieu. Da kiem tra truoc
+# khi viet script nay: 0 ban ghi `applications.source_id`/`department_id` mo
+# coi (khong khop ban ghi cha) tren du lieu dev hien tai, nen ADD CONSTRAINT
+# chac chan khong bi MySQL tu choi.
+#
+# Chay: python -m scripts.migrate_v2_4
+# Idempotent: kiem tra constraint da ton tai truoc khi ALTER, chay lai nhieu lan an toan.
 
 from sqlalchemy import inspect, text
 

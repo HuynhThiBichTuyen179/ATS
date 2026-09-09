@@ -1,11 +1,10 @@
-"""Business ID generator - xem ats_system_design_v2.md CHANGE 03.
-
-TUYET DOI khong dung SELECT MAX(id)+1 hoac last_id+1 (race condition).
-Co che: bang dem rieng `id_sequences` + row lock (SELECT...FOR UPDATE) trong
-cung transaction voi viec tao entity. Tren SQLite (dev/test), SQLAlchemy khong
-emit FOR UPDATE that nen bo sung mot threading.Lock lam lop bao ve thu hai -
-du de chay concurrency test dung trong 1 process.
-"""
+# Business ID generator.
+#
+# TUYET DOI khong dung SELECT MAX(id)+1 hoac last_id+1 (race condition).
+# Co che: bang dem rieng `id_sequences` + row lock (SELECT...FOR UPDATE) trong
+# cung transaction voi viec tao entity. Tren SQLite (dev/test), SQLAlchemy
+# khong emit FOR UPDATE that nen bo sung mot threading.Lock lam lop bao ve
+# thu hai - du de chay concurrency test dung trong 1 process.
 
 import threading
 

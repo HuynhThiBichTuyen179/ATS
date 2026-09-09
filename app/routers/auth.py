@@ -43,7 +43,7 @@ def me(current_user: User = Depends(get_current_user)):
 @router.post("/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
     password_reset_service.request_password_reset(db, payload.email)
-    # Section 24: phan hoi trung tinh, khong tiet lo email co ton tai hay khong.
+    # Phan hoi trung tinh, khong tiet lo email co ton tai hay khong.
     return {"message": "Neu email ton tai trong he thong, chung toi se gui huong dan dat lai mat khau."}
 
 

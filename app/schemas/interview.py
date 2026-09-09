@@ -13,9 +13,9 @@ class InterviewCreateRequest(BaseModel):
 
 
 class InterviewUpdateRequest(BaseModel):
-    """Khong cho sua interview_id/application_id tuy tien (Section 30) - doi
-    Application gan voi Interview can business rule rieng, chua yeu cau o đợt
-    nay nen khong mo endpoint doi Application."""
+    # Khong cho sua interview_id/application_id tuy tien - doi Application
+    # gan voi Interview can business rule rieng, chua co endpoint doi
+    # Application.
 
     start_time: str | None = None
     end_time: str | None = None

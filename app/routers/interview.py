@@ -59,8 +59,8 @@ def create_interview(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    # Section 27: Candidate phai duoc chon TU Application hop le - khong tao
-    # Interview khong gan Application.
+    # Candidate phai duoc chon TU Application hop le - khong tao Interview
+    # khong gan Application.
     application = db.query(Application).filter(Application.business_id == payload.application_business_id).first()
     if not application:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "APPLICATION_NOT_FOUND")
@@ -89,7 +89,7 @@ def list_interviews(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    # Section 28: filter theo HR/Interviewer/Department/Application Status/Date Range.
+    # Filter theo HR/Interviewer/Department/Application Status/Date Range.
     query = db.query(Interview).join(Application, Interview.application_id == Application.id)
 
     if current_user.role == UserRole.HR:
@@ -115,9 +115,9 @@ def list_my_interviews(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Section 33: Candidate Dashboard - chi xem Interview cua chinh minh,
-    khong xem duoc noi bo notes/feedback (da loai bo o InterviewOut - chi map
-    field cong khai, xem _to_out)."""
+    # Candidate Dashboard - chi xem Interview cua chinh minh, khong xem duoc
+    # noi bo notes/feedback (da loai bo o InterviewOut - chi map field cong
+    # khai, xem _to_out).
     if current_user.role != UserRole.CANDIDATE:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "ONLY_CANDIDATE_HAS_MY_INTERVIEWS")
     candidate = db.query(Candidate).filter(Candidate.user_id == current_user.id).first()
@@ -184,7 +184,7 @@ def delete_interview(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    """Section 31: 'Xoa' = huy (CANCELLED), khong hard-delete."""
+    # "Xoa" = huy (CANCELLED), khong hard-delete.
     interview = _get_interview_or_404(db, interview_business_id)
     if current_user.role == UserRole.HR and interview.application.assigned_hr_id != current_user.id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "NOT_YOUR_ASSIGNED_APPLICATION")

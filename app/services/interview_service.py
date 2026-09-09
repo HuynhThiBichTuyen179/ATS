@@ -1,8 +1,5 @@
-"""v2.2 Section 26-34 - Interview Calendar. Model `interviews` da ton tai san
-trong schema tu truoc nhung chua tung co router/service nao su dung (Gap
-APP-20 da ghi nhan trong tai lieu reverse-engineering) - dot nay xay dung day
-du CRUD + kiem tra trung lich + email thong bao, khong tao bang moi.
-"""
+# Interview Calendar - CRUD + kiem tra trung lich + email thong bao cho
+# bang `interviews` da co san trong schema.
 
 from datetime import datetime
 
@@ -23,10 +20,9 @@ def _check_conflict(
     db: Session, candidate_id: int, interviewer_id: int, start: datetime, end: datetime,
     exclude_interview_id: int | None = None,
 ) -> None:
-    """Section 32: Start < End; Candidate/Interviewer khong duoc trung lich.
-    Overlap: [start,end) giao [existing_start,existing_end) khi
-    start < existing_end AND existing_start < end.
-    """
+    # Start < End; Candidate/Interviewer khong duoc trung lich.
+    # Overlap: [start,end) giao [existing_start,existing_end) khi
+    # start < existing_end AND existing_start < end.
     if start >= end:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "START_TIME_MUST_BE_BEFORE_END_TIME")
 
@@ -155,8 +151,7 @@ def update_interview(
 
 
 def cancel_interview(db: Session, actor: User, interview: Interview) -> Interview:
-    """Section 31: khong hard-delete - luon chuyen CANCELLED, giu nguyen
-    audit/feedback da co."""
+    # Khong hard-delete - luon chuyen CANCELLED, giu nguyen audit/feedback da co.
     before = {"status": interview.status.value}
     interview.status = InterviewStatus.CANCELLED
     db.flush()

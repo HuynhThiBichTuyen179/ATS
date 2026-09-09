@@ -32,9 +32,9 @@ def create_candidate(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    # Section 1: HR/HR_MANAGER/ADMIN duoc tao; Candidate KHONG duoc tao ho so
-    # ung vien khac (da chan qua require_hr_or_above - CANDIDATE khong nam
-    # trong danh sach role duoc phep cua dependency nay).
+    # HR/HR_MANAGER/ADMIN duoc tao; Candidate KHONG duoc tao ho so ung vien
+    # khac (da chan qua require_hr_or_above - CANDIDATE khong nam trong danh
+    # sach role duoc phep cua dependency nay).
     candidate, application = candidate_service.create_candidate_with_application(
         db, current_user,
         full_name=payload.full_name, email=payload.email, phone=payload.phone, gender=payload.gender,
@@ -42,9 +42,9 @@ def create_candidate(
         skills_summary=payload.skills_summary, experience_summary=payload.experience_summary,
     )
     # Tra ve ca application_business_id de frontend upload CV ngay sau khi tao
-    # (Section 1) ma khong can query lai - CandidateOut khong the mo rong field
-    # nay vi 1 Candidate co the co nhieu Application, chi Application VUA TAO
-    # o day moi co y nghia truc tiep.
+    # ma khong can query lai - CandidateOut khong the mo rong field nay vi 1
+    # Candidate co the co nhieu Application, chi Application VUA TAO o day
+    # moi co y nghia truc tiep.
     return {**_to_out(candidate).model_dump(), "application_business_id": application.business_id}
 
 
@@ -54,7 +54,7 @@ def list_candidates(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_hr_or_above),
 ):
-    # Section 40: search theo ten/email/SDT.
+    # Search theo ten/email/SDT.
     query = db.query(Candidate)
     if search:
         like = f"%{search.strip()}%"
@@ -93,11 +93,9 @@ def update_candidate(
     candidate = _get_candidate_or_404(db, candidate_business_id)
     if current_user.role == UserRole.CANDIDATE and candidate.user_id != current_user.id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "NOT_YOUR_PROFILE")
-    # v2.3 Section 15/16: RBAC "Sua Candidate" = Own/Scoped/Full/Full - HR chi
-    # duoc sua Candidate co it nhat 1 Application dang assigned_hr_id cho minh
-    # (cung 1 quy uoc "Scoped" da dung xuyen suot applications/interview/ai/
-    # resumes router). Truoc day thieu check nay -> moi HR sua duoc moi
-    # Candidate, khong dung RBAC table yeu cau.
+    # RBAC "Sua Candidate" = Own/Scoped/Full/Full - HR chi duoc sua Candidate
+    # co it nhat 1 Application dang assigned_hr_id cho minh (cung 1 quy uoc
+    # "Scoped" dung xuyen suot applications/interview/ai/resumes router).
     if current_user.role == UserRole.HR:
         has_assigned = (
             db.query(Application)
