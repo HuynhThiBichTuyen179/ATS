@@ -45,7 +45,7 @@ DEMO_EMAIL_TEMPLATES = [
     (
         EmailTemplateType.INTERVIEW_INVITATION,
         "THƯ MỜI PHỎNG VẤN",
-        "[{{company_name}}] Thư mời phỏng vấn vị trí{{job_title}}",
+        "[{{company_name}}] Thư mời phỏng vấn vị trí {{job_title}}",
         "Chào {{candidate_name}},\n\n"
         "{{company_name}} trân trọng mời bạn tham gia phỏng vấn cho vị trí {{job_title}}.\n"
         "Bộ phận tuyển dụng sẽ sớm liên hệ để xác nhận thời gian và hình thức phỏng vấn cụ thể. \n"
