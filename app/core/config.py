@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     smtp_from_name: str = "ATS Recruitment"
     company_name: str = "Công ty Demo ATS"
 
+    # Tuy chon - chi dung khi moi truong deploy chan cong SMTP (vd Railway
+    # Trial). Neu co brevo_api_key, send_raw_email() se goi qua Brevo HTTP
+    # API (cong 443) thay vi ket noi SMTP truc tiep. De trong -> van dung
+    # SMTP nhu binh thuong, khong anh huong gi.
+    brevo_api_key: str = ""
+    brevo_sender_email: str = ""
+
     
     ai_provider: str = "gemini"
     ai_api_key: str = ""

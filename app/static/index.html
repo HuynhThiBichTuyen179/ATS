@@ -1078,6 +1078,14 @@
         <input id="apply-email" type="email" required value="${escapeHtml(u.email)}" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
       <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Số điện thoại *</label>
         <input id="apply-phone" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Giới tính</label>
+          <select id="apply-gender" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
+            <option value="">- Không chọn -</option><option value="MALE">Nam</option><option value="FEMALE">Nữ</option><option value="OTHER">Khác</option>
+          </select></div>
+        <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Lương mong muốn</label>
+          <input id="apply-salary" type="number" min="0" step="100000" placeholder="VNĐ" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm"></div>
+      </div>
       <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nguồn hồ sơ *</label>
         <select id="apply-source" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
           <option value="">- Vui lòng chọn nguồn hồ sơ -</option>
@@ -1112,6 +1120,8 @@
         candidate_full_name: val('apply-fullname'),
         candidate_email: val('apply-email'),
         candidate_phone: val('apply-phone'),
+        candidate_gender: val('apply-gender') || null,
+        desired_salary: val('apply-salary') ? Number(val('apply-salary')) : null,
         source_business_id: sourceBusinessId,
         ai_consent: document.getElementById('apply-ai-consent').checked,
         resume_text: val('apply-resume-text') || null,
@@ -2237,7 +2247,6 @@
         <select id="send-email-template" required class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm">
           ${templates.map(t => `<option value="${t.business_id}">${escapeHtml(t.name)} (${EMAIL_TYPE_LABEL[t.type] || t.type})</option>`).join('') || '<option value="">(chưa có mẫu ACTIVE - vào tab "Mẫu Email" để tạo)</option>'}
         </select></div>
-      <p class="text-[11px] text-slate-400">Nếu SMTP chưa cấu hình đúng trong <code>.env</code> (SMTP_USER/SMTP_PASSWORD), việc gửi sẽ thất bại thật - lỗi cụ thể được ghi lại vào Audit Log.</p>
       <div class="pt-2 flex justify-end gap-3">
         <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-semibold">Hủy</button>
         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold">Gửi</button>

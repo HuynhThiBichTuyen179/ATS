@@ -59,11 +59,36 @@ def render_template(subject_template: str, content_template: str, variables: dic
     return subject, content
 
 
-def send_raw_email(to_email: str, subject: str, body: str) -> tuple[bool, str]:
-    # Gui email that qua SMTP. Tra ve (success, status_message). Neu
-    # SMTP_USER/SMTP_PASSWORD chua cau hinh, smtplib se tu bao loi xac thuc
-    # that (khong can kiem tra truoc) - loi do duoc bat lai o khoi except ben
-    # duoi va tra ve FAILED voi thong diep cu the, khong im lang coi nhu da xu ly.
+def _send_via_brevo(to_email: str, subject: str, body: str) -> tuple[bool, str]:
+    # Goi Brevo Transactional Email API qua HTTPS (cong 443) thay vi SMTP
+    # thuan - dung khi moi truong deploy chan cong SMTP (vd Railway Trial).
+    # sender.email BAT BUOC phai la email da duoc Brevo xac minh (Senders),
+    # khong the la email tuy y.
+    import httpx
+
+    sender_email = settings.brevo_sender_email or settings.smtp_user
+    payload = {
+        "sender": {"name": settings.smtp_from_name, "email": sender_email},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "textContent": body,
+    }
+    headers = {
+        "api-key": settings.brevo_api_key,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    try:
+        with httpx.Client(timeout=15) as client:
+            resp = client.post("https://api.brevo.com/v3/smtp/email", json=payload, headers=headers)
+        if resp.status_code in (200, 201):
+            return True, "SENT (Brevo API)"
+        return False, f"FAILED (Brevo error: HTTP {resp.status_code}: {resp.text[:300]})"
+    except Exception as e:
+        return False, f"FAILED (Brevo error: {e})"
+
+
+def _send_via_smtp(to_email: str, subject: str, body: str) -> tuple[bool, str]:
     msg = EmailMessage(policy=_EMAIL_POLICY)
     msg["Subject"] = subject
     msg["From"] = f"{settings.smtp_from_name} <{settings.smtp_user}>"
@@ -79,6 +104,20 @@ def send_raw_email(to_email: str, subject: str, body: str) -> tuple[bool, str]:
         return True, "SENT (SMTP that)"
     except Exception as e:
         return False, f"FAILED (SMTP error: {e})"
+
+
+def send_raw_email(to_email: str, subject: str, body: str) -> tuple[bool, str]:
+    # Gui email that. Tra ve (success, status_message). Neu chua cau hinh
+    # dung SMTP_USER/SMTP_PASSWORD (hoac BREVO_API_KEY), viec gui se that bai
+    # that - loi do duoc bat lai va tra ve FAILED voi thong diep cu the,
+    # khong im lang coi nhu da xu ly.
+    #
+    # BREVO_API_KEY co gia tri -> uu tien gui qua Brevo HTTP API (cong 443,
+    # khong bi chan boi mot so nen tang deploy). De trong -> gui SMTP truc
+    # tiep nhu binh thuong (mac dinh, khong doi hanh vi hien co).
+    if settings.brevo_api_key:
+        return _send_via_brevo(to_email, subject, body)
+    return _send_via_smtp(to_email, subject, body)
 
 
 def send_email(
