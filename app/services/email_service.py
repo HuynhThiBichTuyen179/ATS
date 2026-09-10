@@ -4,6 +4,7 @@
 # am tham coi la "da xu ly".
 
 import smtplib
+import socket
 import ssl
 from email.message import EmailMessage
 from email.policy import default as default_email_policy
@@ -28,6 +29,27 @@ from app.services import audit_service
 _EMAIL_POLICY = default_email_policy.clone(max_line_length=998)
 
 
+def _smtp_connect_ipv4(host: str, port: int, timeout: float) -> smtplib.SMTP:
+    # Nhieu moi truong container/cloud (Railway...) thieu route IPv6 that du
+    # DNS van tra ve ca AAAA lan A cho smtp.gmail.com - smtplib thu ket noi
+    # bang dia chi IPv6 truoc va bi OS tu choi ngay ("Network is unreachable"),
+    # dung truoc khi kip thu dia chi IPv4. Ep tam thoi socket.getaddrinfo chi
+    # tra ve IPv4 trong luc smtplib.SMTP() ket noi - host truyen vao van la ten
+    # mien that (khong phai IP) nen TLS server_hostname/xac thuc chung chi o
+    # starttls() sau do khong bi anh huong.
+    orig_getaddrinfo = socket.getaddrinfo
+
+    def _ipv4_only(*args, **kwargs):
+        results = orig_getaddrinfo(*args, **kwargs)
+        return [r for r in results if r[0] == socket.AF_INET] or results
+
+    socket.getaddrinfo = _ipv4_only
+    try:
+        return smtplib.SMTP(host, port, timeout=timeout)
+    finally:
+        socket.getaddrinfo = orig_getaddrinfo
+
+
 def render_template(subject_template: str, content_template: str, variables: dict) -> tuple[str, str]:
     subject, content = subject_template, content_template
     for key, value in variables.items():
@@ -50,7 +72,7 @@ def send_raw_email(to_email: str, subject: str, body: str) -> tuple[bool, str]:
 
     try:
         context = ssl.create_default_context()
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+        with _smtp_connect_ipv4(settings.smtp_host, settings.smtp_port, timeout=15) as server:
             server.starttls(context=context)
             server.login(settings.smtp_user, settings.smtp_password)
             server.send_message(msg)
