@@ -43,11 +43,11 @@ def me(current_user: User = Depends(get_current_user)):
 @router.post("/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
     password_reset_service.request_password_reset(db, payload.email)
-    # Phan hoi trung tinh, khong tiet lo email co ton tai hay khong.
-    return {"message": "Neu email ton tai trong he thong, chung toi se gui huong dan dat lai mat khau."}
+    # Phản hồi trung tính, không tiết lộ email có tồn tại hay không.
+    return {"message": "Chúng tôi đã gửi email đặt lại mật khẩu, vui lòng kiểm tra hộp thư."}
 
 
 @router.post("/reset-password")
 def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
     password_reset_service.reset_password(db, payload.token, payload.new_password)
-    return {"message": "Dat lai mat khau thanh cong. Vui long dang nhap lai."}
+    return {"message": "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."}

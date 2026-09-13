@@ -2032,7 +2032,7 @@
         <p><span class="font-bold">Điểm yếu:</span> ${(latestAnalysis.weaknesses || []).join(', ') || '-'}</p>
         <p><span class="font-bold">Tóm tắt kinh nghiệm:</span> ${escapeHtml(latestAnalysis.experience_summary || '-')}</p>
         <p><span class="font-bold">Nhận xét/Đề xuất:</span> ${escapeHtml(latestAnalysis.recommendation)}</p>
-        <p class="text-slate-400">Model: ${escapeHtml(latestAnalysis.provider)}/${escapeHtml(latestAnalysis.model)} · ${formatDateTime(latestAnalysis.created_at)}</p>
+        <p class="text-slate-400">Phân tích bởi ATS AI · ${formatDateTime(latestAnalysis.created_at)}</p>
       </div>
     </div>`;
     }

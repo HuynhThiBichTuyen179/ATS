@@ -16,7 +16,8 @@ def test_forgot_password_never_leaks_account_existence(client, seed):
     resp_not_exists = client.post("/auth/forgot-password", json={"email": "khong-ton-tai@example.com"})
     assert resp_exists.status_code == 200
     assert resp_not_exists.status_code == 200
-    assert resp_exists.json() == resp_not_exists.json(), "Response phai giong het nhau, khong duoc tiet lo email co ton tai"
+    # Phản hồi phải giống hệt nhau, không được tiết lộ email có tồn tại hay không.
+    assert resp_exists.json() == resp_not_exists.json()
 
 
 def test_forgot_password_creates_hashed_token_with_expiry(client, seed, db):

@@ -15,8 +15,9 @@ from app.services import audit_service, email_service
 
 
 def request_password_reset(db: Session, email: str) -> None:
-    # KHONG leak account existence - luon xu ly nhu nhau (khong raise loi/tra
-    # thong tin khac nhau) du email co ton tai hay khong.
+    # KHÔNG để lộ việc tài khoản có tồn tại hay không - luôn xử lý giống nhau
+    # (không raise lỗi, không trả về thông tin khác nhau) dù email có tồn tại
+    # trong hệ thống hay không.
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return
